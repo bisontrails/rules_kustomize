@@ -1,0 +1,11 @@
+workspace(name = "co_bisontrails_rules_kustomize")
+
+load(
+    "@co_bisontrails_rules_kustomize//kustomize:repositories.bzl",
+    "helm_register_tool",
+    "kustomize_register_tool",
+)
+
+helm_register_tool()
+
+kustomize_register_tool()

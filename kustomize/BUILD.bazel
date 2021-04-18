@@ -1,0 +1,49 @@
+config_setting(
+    name = "darwin_x86_64",
+    values = {
+        "cpu": "darwin",
+    },
+)
+
+config_setting(
+    name = "linux_x86_64",
+    values = {
+        "cpu": "k8",
+    },
+)
+
+config_setting(
+    name = "linux_aarch64",
+    values = {
+        "cpu": "arm64",
+    },
+)
+
+config_setting(
+    name = "windows_x86_64",
+    values = {
+        "cpu": "x64_windows",
+    },
+)
+
+filegroup(
+    name = "helm",
+    srcs = select({
+        "//kustomize:darwin_x86_64": ["@helm_tool_darwin_amd64//:binary"],
+        "//kustomize:linux_aarch64": ["@helm_tool_linux_arm64//:binary"],
+        "//kustomize:linux_x86_64": ["@helm_tool_linux_amd64//:binary"],
+        "//kustomize:windows_x86_64": ["@helm_tool_windows_amd64//:binary"],
+    }),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "kustomize",
+    srcs = select({
+        "//kustomize:darwin_x86_64": ["@kustomize_tool_darwin_amd64//:binary"],
+        "//kustomize:linux_aarch64": ["@kustomize_tool_linux_arm64//:binary"],
+        "//kustomize:linux_x86_64": ["@kustomize_tool_linux_amd64//:binary"],
+        "//kustomize:windows_x86_64": ["@kustomize_tool_windows_amd64//:binary"],
+    }),
+    visibility = ["//visibility:public"],
+)

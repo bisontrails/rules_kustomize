@@ -1,0 +1,21 @@
+name: Continuous Integration
+on:
+  # See https://docs.github.com/en/actions/reference/events-that-trigger-workflows.
+  push:
+    branches:
+    - master
+    - main
+    tags:
+    - v*
+  pull_request:
+jobs:
+  bazel-source-inspection:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out VCS repository
+      uses: actions/checkout@v2
+    - name: Confirm Bazel files is formatted per "buildifier"
+      uses: thompsonja/bazel-buildifier@v0.3.0
+      with:
+        # See https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md.
+        warnings: -function-docstring,-module-docstring

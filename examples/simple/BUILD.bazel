@@ -1,0 +1,17 @@
+load(
+    "@co_bisontrails_rules_kustomize//kustomize:kustomize.bzl",
+    "kustomization",
+    "kustomized_resources",
+)
+
+kustomization(
+    name = "base",
+    srcs = [
+        "config-bindings",
+    ],
+)
+
+kustomized_resources(
+    name = "simple",
+    kustomization = ":base",
+)
