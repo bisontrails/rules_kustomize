@@ -1,0 +1,6 @@
+load("//kustomize:kustomize.bzl", "kustomization")
+
+kustomization(
+    name = "extra_translations",
+    visibility = ["//test:__subpackages__"],
+)

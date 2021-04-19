@@ -1,0 +1,12 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: minecraft
+spec:
+  selector:
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - test-minecraft
+  minAvailable: 1

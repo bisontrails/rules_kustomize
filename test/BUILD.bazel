@@ -1,0 +1,29 @@
+load("kustomize_test.bzl", "kustomize_test")
+
+kustomize_test(
+    name = "simple",
+    srcs = [
+        "testdata/simple/config-bindings",
+    ],
+)
+
+kustomize_test(
+    name = "overlay",
+    srcs = [
+        "testdata/overlay/pod.yaml",
+    ],
+    enable_managed_by_label = True,
+    deps = [
+        ":simple",
+        "//test/testdata/components/extra-translations:extra_translations",
+    ],
+)
+
+kustomize_test(
+    name = "helm",
+    srcs = [
+        "testdata/helm/pdb.yaml",
+        "//test/testdata/helm/charts",
+    ],
+    enable_helm = True,
+)

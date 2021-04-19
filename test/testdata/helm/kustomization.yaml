@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+- repo: https://itzg.github.io/minecraft-server-charts
+  name: minecraft
+  version: 3.1.4
+  releaseName: test
+  valuesInline:
+    minecraftServer:
+      eula: true
+
+replicas:
+- name: test-minecraft
+  count: 2
+
+resources:
+- pdb.yaml

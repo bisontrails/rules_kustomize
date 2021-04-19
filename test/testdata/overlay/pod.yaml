@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: show-config
+spec:
+  volumes:
+  - name: translations
+    configMap:
+      name: translations
+  containers:
+  - name: show
+    image: busybox:latest
+    command:
+    - /bin/sh
+    args:
+    - -c
+    - |
+      cd /etc/translations
+      while true; do
+        echo "Translations:"
+        for f in $(ls *); do
+          echo "  ${f}: $(cat ${f})"
+        done
+        echo
+        sleep 3
+      done
+    volumeMounts:
+    - name: translations
+      mountPath: /etc/translations
+      readOnly: true

@@ -1,0 +1,47 @@
+apiVersion: v1
+data:
+  GOODBYE: adios
+  HELLO: hola
+  MAN: hombre
+  THANK_YOU: gracias
+  WOMAN: mujer
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v4.1.2
+  name: translations-t8gcg5kbfg
+  namespace: test
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v4.1.2
+  name: show-config
+  namespace: test
+spec:
+  containers:
+  - args:
+    - -c
+    - |
+      cd /etc/translations
+      while true; do
+        echo "Translations:"
+        for f in $(ls *); do
+          echo "  ${f}: $(cat ${f})"
+        done
+        echo
+        sleep 3
+      done
+    command:
+    - /bin/sh
+    image: busybox:latest
+    name: show
+    volumeMounts:
+    - mountPath: /etc/translations
+      name: translations
+      readOnly: true
+  volumes:
+  - configMap:
+      name: translations-t8gcg5kbfg
+    name: translations

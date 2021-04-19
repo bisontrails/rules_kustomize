@@ -1,0 +1,7 @@
+filegroup(
+    name = "charts",
+    srcs = glob([
+        "minecraft/**",
+    ]),
+    visibility = ["//test:__subpackages__"],
+)
