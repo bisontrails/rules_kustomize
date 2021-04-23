@@ -103,7 +103,7 @@ _kustomized_resources_attrs = {
         default = True,
     ),
     "result": attr.output(
-        doc = "The built result, with a YAML stream of KRM resources in separate documents.",
+        doc = "The built result, as a YAML stream of KRM resources in separate documents.",
         mandatory = True,
     ),
 }
