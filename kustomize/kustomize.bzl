@@ -1,6 +1,10 @@
 KustomizationInfo = provider(
     doc = "Kustomization root summary",
     fields = {
+        "requires_exec_functions": "Whether this kustomization requires use of exec functions (raw executables).",
+        "requires_helm": "Whether this kustomization requires use of the Helm chart inflator generator.",
+        "requires_plugins": "Whether this kustomization requires use of kustomize plugins.",
+        "requires_starlark_functions": "Whether this kustomization requires use of Starlark functions.",
         "root": "The directory immediately containing the kustomization file defining this kustomization.",
         "transitive_resources": "The set of files (including other kustomizations) referenced by this kustomization.",
     },
@@ -15,6 +19,34 @@ _kustomization_attrs = {
         doc = "kustomization.yaml, kustomization.yml, or kustomization file for this kustomization.",
         allow_single_file = True,
     ),
+    "requires_exec_functions": attr.bool(
+        doc = """Whether this kustomization requires use of exec functions (raw executables).
+
+Even if this kustomization's top-level resources don't require such
+use but any of its base kustomizations do, this value is effectively
+True.""",
+    ),
+    "requires_helm": attr.bool(
+        doc = """Whether this kustomization requires use of the Helm chart inflator generator.
+
+Even if this kustomization's top-level resources don't require such
+use but any of its base kustomizations do, this value is effectively
+True.""",
+    ),
+    "requires_plugins": attr.bool(
+        doc = """Whether this kustomization requires use of kustomize plugins.
+
+Even if this kustomization's top-level resources don't require such
+use but any of its base kustomizations do, this value is effectively
+True.""",
+    ),
+    "requires_starlark_functions": attr.bool(
+        doc = """Whether this kustomization requires use of Starlark functions.
+
+Even if this kustomization's top-level resources don't require such
+use but any of its base kustomizations do, this value is effectively
+True.""",
+    ),
     "srcs": attr.label_list(
         doc = "Files referenced as resources for this kustomization.",
         allow_files = True,
@@ -24,6 +56,18 @@ _kustomization_attrs = {
 def _kustomization_impl(ctx):
     return [
         KustomizationInfo(
+            requires_exec_functions =
+                ctx.attr.requires_exec_functions or
+                any([dep[KustomizationInfo].requires_exec_functions for dep in ctx.attr.deps]),
+            requires_helm =
+                ctx.attr.requires_helm or
+                any([dep[KustomizationInfo].requires_helm for dep in ctx.attr.deps]),
+            requires_plugins =
+                ctx.attr.requires_plugins or
+                any([dep[KustomizationInfo].requires_plugins for dep in ctx.attr.deps]),
+            requires_starlark_functions =
+                ctx.attr.requires_starlark_functions or
+                any([dep[KustomizationInfo].requires_starlark_functions for dep in ctx.attr.deps]),
             root = ctx.file.file.dirname,
             transitive_resources = depset(
                 direct = [ctx.file.file] + ctx.files.srcs,
@@ -46,24 +90,9 @@ def kustomization(name, **kwargs):
         **kwargs
     )
 
-def _helm_tool_if_enabled(enable_helm):
-    return Label("//kustomize:helm") if enable_helm else None
-
 _kustomized_resources_attrs = {
-    "enable_alpha_plugins": attr.bool(
-        doc = "Enable kustomize plugins.",
-    ),
-    "enable_exec": attr.bool(
-        doc = "Enable support for exec functions (raw executables).",
-    ),
-    "enable_helm": attr.bool(
-        doc = "Enable use of the Helm chart inflator generator.",
-    ),
     "enable_managed_by_label": attr.bool(
         doc = "Enable adding the 'app.kubernetes.io/managed-by' label to objects.",
-    ),
-    "enable_starlark_functions": attr.bool(
-        doc = "Enable support for Starlark functions.",
     ),
     "env_bindings": attr.string_dict(
         doc = "Names and values of environment variables to be used by functions.",
@@ -73,7 +102,7 @@ _kustomized_resources_attrs = {
     ),
     "_helm": attr.label(
         doc = "Helm tool to use for inflating Helm charts.",
-        default = _helm_tool_if_enabled,
+        default = "//kustomize:helm",
         allow_single_file = True,
         executable = True,
         cfg = "exec",
@@ -113,17 +142,17 @@ def _kustomized_resources_impl(ctx):
     args = ctx.actions.args()
     args.add("build")
     args.add(kustomization.root)
-    if ctx.attr.enable_alpha_plugins:
-        args.add("--enable-alpha-plugins")
-    if ctx.attr.enable_exec:
-        args.add("--enable-exec")
-    if ctx.attr.enable_helm:
+    if kustomization.requires_helm:
         args.add("--enable-helm")
         args.add("--helm-command", ctx.executable._helm.path)
+    if kustomization.requires_exec_functions:
+        args.add("--enable-exec")
+    if kustomization.requires_plugins:
+        args.add("--enable-alpha-plugins")
+    if kustomization.requires_starlark_functions:
+        args.add("--enable-star")
     if ctx.attr.enable_managed_by_label:
         args.add("--enable-managedby-label")
-    if ctx.attr.enable_starlark_functions:
-        args.add("--enable-star")
 
     # Place exported environment varibles first, allowing shadowing by
     # explicit bindings
@@ -147,7 +176,7 @@ def _kustomized_resources_impl(ctx):
         executable = ctx.executable._kustomize,
         arguments = [args],
         inputs = kustomization.transitive_resources,
-        tools = [ctx.executable._helm] if ctx.attr.enable_helm else [],
+        tools = [ctx.executable._helm] if kustomization.requires_helm else [],
         outputs = [ctx.outputs.result],
         # Allow inclusion of "--action_env" variables when they're
         # likely to be significant:

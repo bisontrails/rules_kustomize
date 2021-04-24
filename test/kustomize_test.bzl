@@ -10,11 +10,13 @@ def kustomize_test(
         deps = [],
         kustomization_file = None,
         golden_file = None,
+        requires_helm = False,
         **kwargs):
     kustomization(
         name = name,
         deps = deps,
         file = kustomization_file or "testdata/%s/kustomization.yaml" % name,
+        requires_helm = requires_helm,
         srcs = srcs,
     )
 

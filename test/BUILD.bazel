@@ -25,5 +25,5 @@ kustomize_test(
         "testdata/helm/pdb.yaml",
         "//test/testdata/helm/charts",
     ],
-    enable_helm = True,
+    requires_helm = True,
 )

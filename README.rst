@@ -172,29 +172,60 @@ Providers
 
 Attributes
 ^^^^^^^^^^
-+----------------------------+-----------------------------+---------------------------------------+
-| **Name**                   | **Type**                    | **Default value**                     |
-+----------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`name`           | :type:`string`              | |mandatory|                           |
-+----------------------------+-----------------------------+---------------------------------------+
-| A unique name for the :term:`kustomization`. As there is usually only one such target defined    |
-| per Bazel package (assuming that the target is in the same package as the :term:`kustomization`  |
-| file), a simple name like "base" is fitting.                                                     |
-+----------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`deps`           | :type:`label_list`          | :value:`[]`                           |
-+----------------------------+-----------------------------+---------------------------------------+
-| The set of `kustomizations <kustomization_>`_ referenced as resources_ by this                   |
-| :term:`kustomization`.                                                                           |
-+----------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`file`           | :type:`label`               | :value:`kustomization.yaml`           |
-+----------------------------+-----------------------------+---------------------------------------+
-| :file:`kustomization.yaml`, :file:`kustomization.yml`, or :file:`kustomization` file for this    |
-| :term:`kustomization`.                                                                           |
-+----------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`srcs`           | :type:`label_list`          | :value:`[]`                           |
-+----------------------------+-----------------------------+---------------------------------------+
-| Files referenced as resources_ for this :term:`kustomization`.                                   |
-+----------------------------+-----------------------------+---------------------------------------+
++-----------------------------------------+-----------------------------+---------------------------------------+
+| **Name**                                | **Type**                    | **Default value**                     |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`name`                        | :type:`string`              | |mandatory|                           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| A unique name for the :term:`kustomization`. As there is usually only one such target defined  per Bazel      |
+| package (assuming that the target is in the same package as the :term:`kustomization` file), a simple name    |
+| like "base" is fitting.                                                                                       |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`deps`                        | :type:`label_list`          | :value:`[]`                           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| The set of `kustomizations <kustomization_>`_ referenced as resources_ by this :term:`kustomization`.         |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`file`                        | :type:`label`               | :value:`kustomization.yaml`           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :file:`kustomization.yaml`, :file:`kustomization.yml`, or :file:`kustomization` file for this                 |
+| :term:`kustomization`.                                                                                        |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`requires_exec_functions`     | :type:`bool`                | :value:`False`                        |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| Whether this :term:`kustomization` requires use of exec functions (raw executables) (per the                  |
+| :cmdflag:`--enable-exec` :tool:`kustomize` flag).                                                             |
+|                                                                                                               |
+| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
+| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`requires_helm`               | :type:`bool`                | :value:`False`                        |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| Whether this :term:`kustomization` requires use of the Helm chart inflator generator (per the                 |
+| :cmdflag:`--enable-helm` :tool:`kustomize` flag).                                                             |
+|                                                                                                               |
+| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
+| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`requires_plugins`            | :type:`bool`                | :value:`False`                        |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| Whether this :term:`kustomization` requires use of :tool:`kustomize` plugins (per the                         |
+| :cmdflag:`--enable-alpha-plugins` :tool:`kustomize` flag).                                                    |
+|                                                                                                               |
+| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
+| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`requires_starlark_functions` | :type:`bool`                | :value:`False`                        |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| Whether this :term:`kustomization` requires use of Starlark functions (per the :cmdflag:`--enable-star`       |
+| :tool:`kustomize` flag).                                                                                      |
+|                                                                                                               |
+| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
+| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| :ruleattr:`srcs`                        | :type:`label_list`          | :value:`[]`                           |
++-----------------------------------------+-----------------------------+---------------------------------------+
+| Files referenced as resources_ for this :term:`kustomization`.                                                |
++-----------------------------------------+-----------------------------+---------------------------------------+
 
 Example
 ^^^^^^^
@@ -214,6 +245,7 @@ Example
             "//apps/base/charts",
             "extras.yaml",
         ],
+        requires_helm = True,
     )
 
 kustomized_resources
@@ -233,29 +265,10 @@ Attributes
 +---------------------------------------+-----------------------------+---------------------------------------+
 | A unique name for the :term:`variant`.                                                                      |
 +---------------------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`enable_alpha_plugins`      | :type:`bool`                | :value:`False`                        |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| Enable :tool:`kustomize` plugins (per the :cmdflag:`--enable-alpha-plugins`                                 |
-| :tool:`kustomize` flag).                                                                                    |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`enable_exec`               | :type:`bool`                | :value:`False`                        |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| Enable support for exec functions (raw executables) (per the :cmdflag:`--enable-exec`                       |
-| :tool:`kustomize` flag).                                                                                    |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`enable_helm`               | :type:`bool`                | :value:`False`                        |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| Enable use of the Helm chart inflator generator (per the :cmdflag:`--enable-helm` :tool:`kustomize`         |
-| flag).                                                                                                      |
-+---------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`enable_managed_by_label`   | :type:`bool`                | :value:`False`                        |
 +---------------------------------------+-----------------------------+---------------------------------------+
 | Enable adding the "app.kubernetes.io/managed-by" label to objects (per the                                  |
 | :cmdflag:`--enable-managedby-label` :tool:`kustomize` flag).                                                |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`enable_starlark_functions` | :type:`bool`                | :value:`False`                        |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| Enable support for Starlark functions (per the :cmdflag:`--enable-star` :tool:`kustomize` flag).            |
 +---------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`env_bindings`              | :type:`string_dict`         | :value:`{}`                           |
 +---------------------------------------+-----------------------------+---------------------------------------+
@@ -301,7 +314,7 @@ Attributes
 | :ruleattr:`result`                    | :type:`output`              | :value:`<name>.yaml`                  |
 +---------------------------------------+-----------------------------+---------------------------------------+
 | The built result, as a YAML stream of KRM resources in separate documents (per the :cmdflag:`--output`      |
-| :tool:`kustomize` flag).                                                          .                         |
+| :tool:`kustomize` flag).                                                                                    |
 +---------------------------------------+-----------------------------+---------------------------------------+
 
 Example
@@ -311,7 +324,6 @@ Example
 
     kustomized_resources(
         name = "production",
-        enable_helm = True,
         env_bindings = {
             "CLUSTER_NAME": "prod1234",
             "ENVIRONMENT": "production",
@@ -330,19 +342,39 @@ KustomizationInfo
 Fields
 ^^^^^^
 
-+--------------------------------+-----------------------------------------------------------------+
-| **Name**                       | **Type**                                                        |
-+--------------------------------+-----------------------------------------------------------------+
-| :pfield:`root`                 | :type:`string`                                                  |
-+--------------------------------+-----------------------------------------------------------------+
++---------------------------------------+----------------------------------------------------------+
+| **Name**                              | **Type**                                                 |
++---------------------------------------+----------------------------------------------------------+
+| :pfield:`requires_exec_functions`     | :type:`bool`                                             |
++---------------------------------------+----------------------------------------------------------+
+| Whether this :term:`kustomization` requires use of exec functions (raw executables) (per the     |
+| :cmdflag:`--enable-exec` :tool:`kustomize` flag).                                                |
++---------------------------------------+----------------------------------------------------------+
+| :pfield:`requires_helm`               | :type:`bool`                                             |
++---------------------------------------+----------------------------------------------------------+
+| Whether this :term:`kustomization` requires use of the Helm chart inflator generator (per the    |
+| :cmdflag:`--enable-helm` :tool:`kustomize` flag).                                                |
++---------------------------------------+----------------------------------------------------------+
+| :pfield:`requires_plugins`            | :type:`bool`                                             |
++---------------------------------------+----------------------------------------------------------+
+| Whether this :term:`kustomization` requires use of :tool:`kustomize` plugins (per the            |
+| :cmdflag:`--enable-alpha-plugins` :tool:`kustomize` flag).                                       |
++---------------------------------------+----------------------------------------------------------+
+| :pfield:`requires_starlark_functions` | :type:`bool`                                             |
++---------------------------------------+----------------------------------------------------------+
+| Whether this :term:`kustomization` requires use of Starlark functions (per the                   |
+| :cmdflag:`--enable-star` :tool:`kustomize` flag).                                                |
++---------------------------------------+----------------------------------------------------------+
+| :pfield:`root`                        | :type:`string`                                           |
++---------------------------------------+----------------------------------------------------------+
 | The directory immediately containing the :term:`kustomization` file defining this                |
 | :term:`kustomization`.                                                                           |
-+--------------------------------+-----------------------------------------------------------------+
-| :pfield:`transitive_resources` | :type:`depset of File`                                          |
-+--------------------------------+-----------------------------------------------------------------+
++---------------------------------------+----------------------------------------------------------+
+| :pfield:`transitive_resources`        | :type:`depset of File`                                   |
++---------------------------------------+----------------------------------------------------------+
 | The set of files (including other :term:`kustomizations`) referenced by this                     |
 | :term:`kustomization`.                                                                           |
-+--------------------------------+-----------------------------------------------------------------+
++---------------------------------------+----------------------------------------------------------+
 
 Difficulties
 ============
