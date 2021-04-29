@@ -11,12 +11,14 @@
 .. role:: type(emphasis)
 .. role:: value(code)
 .. |mandatory| replace:: **mandatory value**
+.. |propagated requirement| replace:: Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base :term:`kustomizations` do, this value is effectively :value:`True`.
 
 =================================
 :tool:`kustomize` rules for Bazel
 =================================
 
 .. External links
+.. _sandboxing: https://docs.bazel.build/versions/master/sandboxing.html
 .. _kustomization term: https://kubectl.docs.kubernetes.io/references/kustomize/glossary/#kustomization
 .. See https://stackoverflow.com/a/4836544/31818 for this abomination:
 .. |the kustomize tool| replace:: the :tool:`kustomize` tool
@@ -195,32 +197,28 @@ Attributes
 | Whether this :term:`kustomization` requires use of exec functions (raw executables) (per the                  |
 | :cmdflag:`--enable-exec` :tool:`kustomize` flag).                                                             |
 |                                                                                                               |
-| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
-| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
+| |propagated requirement|                                                                                      |
 +-----------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`requires_helm`               | :type:`bool`                | :value:`False`                        |
 +-----------------------------------------+-----------------------------+---------------------------------------+
 | Whether this :term:`kustomization` requires use of the Helm chart inflator generator (per the                 |
 | :cmdflag:`--enable-helm` :tool:`kustomize` flag).                                                             |
 |                                                                                                               |
-| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
-| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
+| |propagated requirement|                                                                                      |
 +-----------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`requires_plugins`            | :type:`bool`                | :value:`False`                        |
 +-----------------------------------------+-----------------------------+---------------------------------------+
 | Whether this :term:`kustomization` requires use of :tool:`kustomize` plugins (per the                         |
 | :cmdflag:`--enable-alpha-plugins` :tool:`kustomize` flag).                                                    |
 |                                                                                                               |
-| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
-| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
+| |propagated requirement|                                                                                      |
 +-----------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`requires_starlark_functions` | :type:`bool`                | :value:`False`                        |
 +-----------------------------------------+-----------------------------+---------------------------------------+
 | Whether this :term:`kustomization` requires use of Starlark functions (per the :cmdflag:`--enable-star`       |
 | :tool:`kustomize` flag).                                                                                      |
 |                                                                                                               |
-| Even if this :term:`kustomization`'s top-level resources don't require such use but any of its base           |
-| :term:`kustomizations` do, this value is effectively :value:`True`.                                           |
+| |propagated requirement|                                                                                      |
 +-----------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`srcs`                        | :type:`label_list`          | :value:`[]`                           |
 +-----------------------------------------+-----------------------------+---------------------------------------+
@@ -308,8 +306,9 @@ Attributes
 | :cmdflag:`--reorder` :tool:`kustomize` flag).                                                               |
 |                                                                                                             |
 | The default value uses the :tool:kustomize tool's "legacy" reodering. See the                               |
-| kubernetes-sigs/kustomize#3794 and kubernetes-sigs/kustomize#3829 issues for discussion about how this      |
-| sorting behavior might change.                                                                              |
+| :term:`kustomize` project issues `3794 <https://github.com/kubernetes-sigs/kustomize/issues/3794>`__ and    |
+| `3829 <https://github.com/kubernetes-sigs/kustomize/issues/3829>`__ for discussion about how this sorting   |
+| behavior might change.                                                                                      |
 +---------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`result`                    | :type:`output`              | :value:`<name>.yaml`                  |
 +---------------------------------------+-----------------------------+---------------------------------------+
@@ -379,8 +378,41 @@ Fields
 Difficulties
 ============
 
+These rules attempt to make using :tool:`kustomize` with Bazel easier, but there are a few features of the tools that interact poorly, or at least surprisingly, even when they're individually doing their job as intended. We can work around each problem once we know better what to expect.
+
 Bazel's Sandbox and Load Restrictors
 ------------------------------------
 
+:tool:`kustomize` prefers to load files only from the :term:`kustomization` root directory—the one containing the :file:`kustomization.yaml` file—or any of its subdirectories. The :command:`kustomize build` subcommand runs with a :term:`load restrictor` to enforce this restrictive policy. By default, the :cmdflag:`--load-restrictor` flag uses the value :value:`LoadRestrictionsRootOnly`. With that value in effect, :command:`kustomize build` will refuse to read any files referenced by a :term:`kustomization` that lie outside of the :term:`kustomization` root directory tree, per `this FAQ entry <https://kubectl.docs.kubernetes.io/faq/kustomize/#security-file-foo-is-not-in-or-below-bar>`__.
+
+Bazel can execute the actions for its :command:`build` and :command:`build` in a restricted environment called a :term:`sandbox`, using a technique called sandboxing_. On some operating systems, Bazel uses symbolic links to make only some files available to programs it runs in its actions. These symbolic links point upward and outward to files that lie outside of the :term:`kustomization` root in the sandbox. Even though the links are within the :term:`kustomization` root, their target files are not. :tool:`kustomize` considers this to transgress its :value:`LoadRestrictionsRootOnly` load restriction and blocks the attempt to load the referenced file.
+
+There are three ways around this problem:
+
+* Relax :tool:`kustomize`'s load restrictor by passing :value:`LoadRestrictionsNone` to its :cmdflag:`--load-restrictor` flag, by way of specifying the value :value:`None` for the kustomized_resources_ rule's :ruleattr:`load_restrictor` attribute.
+
+* Use a Bazel sandboxing_ implementation that doesn't rely on symbolic links, such its `sandboxfs <https://docs.bazel.build/versions/master/sandboxing.html#sandboxfs_>`__ FUSE file system. With the :tool:`sandboxfs` tool installed, pass the :cmdflag:`--experimental_use_sandboxfs` `flag <https://docs.bazel.build/versions/master/command-line-reference.html#flag--experimental_use_sandboxfs>`__ to :command:`bazel build`, :command:`bazel test`, or :command:`bazel run`.
+
+.. _disable sandboxing:
+
+* Disable Bazel sandboxing_ entirely by omitting :value:`sandboxed` from the values supplied via its :cmdflag:`--spawn_strategy` `flag <https://docs.bazel.build/versions/master/command-line-reference.html#flag--spawn_strategy>`__. With sandboxing disabled, Bazel will present the input files to :tool:`kustomize` as regular files. So long as those files lie within the :term:`kustomization` root, the :value:`LoadRestrictionsRootOnly` load restrictor will not intervene.
+
+
 Downloading Helm Charts
 -----------------------
+
+The :tool:`kustomize` tool can expand Helm charts using the :krmkind:`Kustomization` manifest's :field:`helmCharts` `field <https://github.com/kubernetes-sigs/kustomize/blob/master/examples/chart.md>`__. If the Helm chart's source files are not available already locally, :tool:`kustomize` can fetch the chart archive and unpack within the directory specified in the :field:`helmGlobals.chartHome` `field <https://github.com/kubernetes-sigs/kustomize/blob/master/examples/chart.md#build-the-base-and-the-variants>`__. By default, this :field:`chartHome` field's value is :value:`charts`, meaning that :tool:`kustomize` will download and expand chart archives in the :file:`charts/<chart name>` directory within the :term:`kustomization` root.
+
+Now, first, let's acknowledge that the :tool:`kustomize` maintainers do **not** recommend `downloading Helm charts automatically <https://github.com/kubernetes-sigs/kustomize/blob/master/examples/chart.md#but-its-not-really-about-performance>`__, nor `even relying on Helm for repeated expansion at all <https://github.com/kubernetes-sigs/kustomize/blob/master/examples/chart.md#best-practice>`__. The capability is there in :tool:`kustomize` today, though, so let's clarify how Bazel might interfere.
+
+What could go wrong? Consider:
+
+* If Bazel sandboxing_ is enabled, you can't have :tool:`kustomize` download and write files within the sandbox directory tree.
+
+  Instead, you can set the :krmkind:`Kustomization` :field:`helmGlobals.chartHome` field to a directory to which Bazel is allowed to write, such as :file:`/tmp`. Alternately, you can `disable sandboxing`_ entirely.
+
+* If your :term:`kustomization` directs :tool:`kustomize` to store Helm chart files outside of the :term:`kustomization` root, or even just refers to such distant files, the default load restrictor will block :tool:`kustomize` from reading them.
+
+  You must relax the default load restrictor by specifying the value :value:`None` for the kustomized_resources_ rule's :ruleattr:`load_restrictor` attribute.
+
+Given that your chosen use of Bazel likely implies a preference for hermetic and repeatable builds, it's best to at least acquire and unpack the Helm chart archives beforehand, committing the resulting files for future use. Expanding the Helm chart as manifests outside of :tool:`kustomize` is even better, though it's then harder to include artifacts generated by other Bazel rules. Finding the right balance will take some experimentation.
