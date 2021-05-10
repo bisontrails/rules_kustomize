@@ -99,7 +99,3 @@ filegroup(
             url = "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/%s/kustomize_%s_%s_%s.tar.gz" % (version, version, platform["os"], platform["arch"]),
             sha256 = platform["sha256"],
         )
-
-# TODO(seh): Do we need this?
-# def rules_kustomize_dependencies():
-#     pass

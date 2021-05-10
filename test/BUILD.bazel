@@ -8,6 +8,15 @@ kustomize_test(
 )
 
 kustomize_test(
+    name = "generated",
+    srcs = [
+        "//test/testdata/generated:bindings.env",
+    ],
+    golden_file = "//test/testdata/generated:golden.yaml",
+    kustomization_file = "//test/testdata/generated:kustomization.yaml",
+)
+
+kustomize_test(
     name = "overlay",
     srcs = [
         "testdata/overlay/pod.yaml",

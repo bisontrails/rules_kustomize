@@ -1,0 +1,34 @@
+exports_files(
+    [
+        "golden.yaml",
+        "kustomization.yaml",
+    ],
+    visibility = ["//test:__subpackages__"],
+)
+
+genrule(
+    name = "env_data",
+    srcs = [
+        "keys.txt",
+        "values.txt",
+    ],
+    outs = ["bindings.env"],
+    cmd_bash = """\
+values=()
+
+while read -r v; do
+  values+=("$${v}")
+done < "$(location values.txt)"
+count=$$(( $${#values[@]} ))
+i=0
+while read -r k; do
+  v=''
+  if (( i < count )); then
+    v="$${values[i]}"
+  fi
+  echo "$${k}=$${v}" >> "$(@)"
+  (( ++i ))
+done < "$(location keys.txt)"
+""",
+    visibility = ["//test:__subpackages__"],
+)

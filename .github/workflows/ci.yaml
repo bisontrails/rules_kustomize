@@ -43,7 +43,9 @@ jobs:
         rm "${f}"
     - name: Build all Bazel targets
       run: |
-        bazel build --experimental_use_sandboxfs //...
+        bazel build \
+          --experimental_use_sandboxfs \
+          //...
     - name: Test all Bazel targets
       # Work around https://github.com/bazelbuild/bazel/issues/7470 by
       # way of the suggestion here:

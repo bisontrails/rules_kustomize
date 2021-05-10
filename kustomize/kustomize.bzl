@@ -91,6 +91,26 @@ def kustomization(name, **kwargs):
     )
 
 _kustomized_resources_attrs = {
+    "_helm": attr.label(
+        doc = "Helm tool to use for inflating Helm charts.",
+        default = "//kustomize:helm",
+        allow_single_file = True,
+        executable = True,
+        cfg = "exec",
+    ),
+    "_kustomize": attr.label(
+        doc = "kustomize tool to use for building kustomizations.",
+        default = ":kustomize",
+        allow_single_file = True,
+        executable = True,
+        cfg = "exec",
+    ),
+    "_zipper": attr.label(
+        default = Label("@bazel_tools//tools/zip:zipper"),
+        executable = True,
+        allow_single_file = True,
+        cfg = "exec",
+    ),
     "enable_managed_by_label": attr.bool(
         doc = "Enable adding the 'app.kubernetes.io/managed-by' label to objects.",
     ),
@@ -100,24 +120,10 @@ _kustomized_resources_attrs = {
     "env_exports": attr.string_list(
         doc = "Names of exported environment variables to be used by functions.",
     ),
-    "_helm": attr.label(
-        doc = "Helm tool to use for inflating Helm charts.",
-        default = "//kustomize:helm",
-        allow_single_file = True,
-        executable = True,
-        cfg = "exec",
-    ),
     "kustomization": attr.label(
         doc = "kustomization to build.",
         mandatory = True,
         providers = [KustomizationInfo],
-    ),
-    "_kustomize": attr.label(
-        doc = "kustomize tool to use for building kustomizations.",
-        default = ":kustomize",
-        allow_single_file = True,
-        executable = True,
-        cfg = "exec",
     ),
     "load_restrictor": attr.string(
         doc = "Control whether kustomizations may load files from outsider their root directory.",
@@ -136,6 +142,34 @@ _kustomized_resources_attrs = {
         mandatory = True,
     ),
 }
+
+def _make_zip_archive_of(ctx, files):
+    zip_manifest_file = ctx.actions.declare_file("{}-manifest".format(ctx.label.name))
+    ctx.actions.write(
+        zip_manifest_file,
+        "".join(["{}={}\n".format(f.short_path, f.path) for f in files]),
+    )
+    source_zip_file = ctx.actions.declare_file(ctx.label.name + ".zip")
+
+    args = ctx.actions.args()
+    args.add("c")
+    args.add(source_zip_file.path)
+    args.add("@" + zip_manifest_file.path)
+    ctx.actions.run(
+        executable = ctx.executable._zipper,
+        arguments = [args],
+        inputs = files + [zip_manifest_file],
+        outputs = [source_zip_file],
+        mnemonic = "KustomizeCollectSourceZIPFile",
+        progress_message = "Collecting source files from kustomized_resources target \"{}\"".format(ctx.label.name),
+    )
+    return source_zip_file
+
+def _files_are_derived(files):
+    for f in files:
+        if f.root.path:
+            return True
+    return False
 
 def _kustomized_resources_impl(ctx):
     kustomization = ctx.attr.kustomization[KustomizationInfo]
@@ -172,18 +206,56 @@ def _kustomized_resources_impl(ctx):
     args.add("--reorder", "legacy" if ctx.attr.reorder_resources else "none")
     args.add("--output", ctx.outputs.result)
 
-    ctx.actions.run(
-        executable = ctx.executable._kustomize,
-        arguments = [args],
-        inputs = kustomization.transitive_resources,
-        tools = [ctx.executable._helm] if kustomization.requires_helm else [],
-        outputs = [ctx.outputs.result],
-        # Allow inclusion of "--action_env" variables when they're
-        # likely to be significant:
-        use_default_shell_env = len(ctx.attr.env_exports) > 0,
-        mnemonic = "KustomizeBuild",
-        progress_message = "Building the \"{}\" kustomization target {}".format(ctx.label.name, kustomization.root),
-    )
+    # Allow inclusion of "--action_env" variables when they're likely to be
+    # significant:
+    use_default_shell_env = len(ctx.attr.env_exports) > 0
+    mnemonic = "KustomizeBuild"
+    progress_message = "Building the \"{}\" kustomization target {}".format(ctx.label.name, kustomization.root)
+
+    # In order to allow kustomize to find all the input files in the
+    # same directory tree, as opposed to spread among different Bazel
+    # "roots" depending on whether the file is derived or not, pack
+    # the files into a ZIP archive with their relative paths adjusted,
+    # folding together contributions from each of these "roots."
+    #
+    # If there are no derived files involved, we don't need the
+    # intermediary ZIP archive.
+    files = kustomization.transitive_resources.to_list()
+    if _files_are_derived(files):
+        source_zip_file = _make_zip_archive_of(ctx, files)
+        ctx.actions.run_shell(
+            inputs = [source_zip_file],
+            tools = [ctx.executable._kustomize] +
+                    ([ctx.executable._helm] if kustomization.requires_helm else []),
+            outputs = [ctx.outputs.result],
+            command = """\
+kustomize=$1; shift
+source_zip_file=$1; shift
+
+unzip -q "${source_zip_file}"
+
+"${kustomize}" "${@}"
+""",
+            arguments = [
+                ctx.executable._kustomize.path,
+                source_zip_file.path,
+                args,
+            ],
+            use_default_shell_env = use_default_shell_env,
+            mnemonic = mnemonic,
+            progress_message = progress_message,
+        )
+    else:
+        ctx.actions.run(
+            executable = ctx.executable._kustomize,
+            arguments = [args],
+            inputs = kustomization.transitive_resources,
+            tools = [ctx.executable._helm] if kustomization.requires_helm else [],
+            outputs = [ctx.outputs.result],
+            use_default_shell_env = use_default_shell_env,
+            mnemonic = mnemonic,
+            progress_message = progress_message,
+        )
 
 _kustomized_resources = rule(
     attrs = _kustomized_resources_attrs,
