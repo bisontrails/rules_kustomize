@@ -134,11 +134,13 @@ In order to use these rules in your Bazel project, you must instruct Bazel to do
     )
 
     load(
-        "@co_bisontrails_rules_kustomize//kustomize:repositories.bzl",
+        "@co_bisontrails_rules_kustomize//kustomize:deps.bzl",
         "helm_register_tool",
         "kustomize_register_tool",
-    )
+        "kustomize_rules_dependencies",
+     )
 
+    kustomize_rules_dependencies()
     helm_register_tool()
     kustomize_register_tool()
 
