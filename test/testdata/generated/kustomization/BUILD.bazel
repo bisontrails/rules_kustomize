@@ -1,0 +1,24 @@
+exports_files(
+    [
+        "bindings.env",
+        "golden.yaml",
+    ],
+    visibility = ["//test:__subpackages__"],
+)
+
+genrule(
+    name = "kustomization",
+    outs = ["kustomization.yaml"],
+    cmd_bash = """\
+cat <<EOF > "$(@)"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+configMapGenerator:
+- name: environment
+  envs:
+  - bindings.env
+EOF
+""",
+    visibility = ["//test:__subpackages__"],
+)

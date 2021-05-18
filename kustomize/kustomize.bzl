@@ -1,3 +1,8 @@
+load(
+    "@bazel_skylib//lib:paths.bzl",
+    "paths",
+)
+
 KustomizationInfo = provider(
     doc = "Kustomization root summary",
     fields = {
@@ -53,7 +58,14 @@ True.""",
     ),
 }
 
+def _file_is_derived(f):
+    return len(f.root.path) > 0
+
 def _kustomization_impl(ctx):
+    k_file = ctx.file.file
+    root = k_file.dirname
+    if _file_is_derived(k_file):
+        root = paths.dirname(k_file.short_path)
     return [
         KustomizationInfo(
             requires_exec_functions =
@@ -68,7 +80,7 @@ def _kustomization_impl(ctx):
             requires_starlark_functions =
                 ctx.attr.requires_starlark_functions or
                 any([dep[KustomizationInfo].requires_starlark_functions for dep in ctx.attr.deps]),
-            root = ctx.file.file.dirname,
+            root = root,
             transitive_resources = depset(
                 direct = [ctx.file.file] + ctx.files.srcs,
                 transitive = [dep[KustomizationInfo].transitive_resources for dep in ctx.attr.deps],
@@ -167,7 +179,7 @@ def _make_zip_archive_of(ctx, files):
 
 def _files_are_derived(files):
     for f in files:
-        if f.root.path:
+        if _file_is_derived(f):
             return True
     return False
 
