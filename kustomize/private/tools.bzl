@@ -29,6 +29,28 @@ _helm_releases = {
 }
 
 _kustomize_releases = {
+    "v4.1.3": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "f1e54fdb659a68e5ec0a65aa52868bcc32b18fd3bc2b545db890ba261d3781c4",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "f028cd2b675d215572d54634311777aa475eb5612fb8a70d84b957c4a27a861e",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "4c5073f4b25bd427ed6c0efa7377e2422fe58b8629c349308eaf7489fb9b71cd",
+        },
+        {
+            "os": "windows",
+            "arch": "amd64",
+            "sha256": "67a21b674a8dad5e027224c3426e496028e10a65e779e950d07e5d6d8c1d9d2d",
+        },
+    ],
     "v4.1.2": [
         {
             "os": "darwin",
@@ -84,7 +106,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.1.2"):
+def kustomize_register_tool(version = "v4.1.3"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
