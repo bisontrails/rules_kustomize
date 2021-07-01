@@ -4,6 +4,28 @@ load(
 )
 
 _helm_releases = {
+    "v3.6.2": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "81a94d2877326012b99ac0737517501e5ed69bb4987884e7f2d0887ad27895a9",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "f3a4be96b8a3b61b14eec1a35072e1d6e695352e7a08751775abf77861a0bf54",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "957031f3c8cf21359065817c15c5226cb3082cac33547542a37cf3425f9fdcd5",
+        },
+        {
+            "os": "windows",
+            "arch": "amd64",
+            "sha256": "71078748101de3f2df40b25031e4b7aa4bdf760ff7bcc6d3f503f988d24bd2c4",
+        },
+    ],
     "v3.6.1": [
         {
             "os": "darwin",
@@ -108,7 +130,7 @@ def _maybe(repo_rule, name, **kwargs):
     if not native.existing_rule(name):
         repo_rule(name = name, **kwargs)
 
-def helm_register_tool(version = "v3.6.1"):
+def helm_register_tool(version = "v3.6.2"):
     for platform in _helm_releases[version]:
         suffix = "tar.gz"
         if platform["os"] == "windows":
