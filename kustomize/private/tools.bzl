@@ -73,6 +73,25 @@ _helm_releases = {
 }
 
 _kustomize_releases = {
+    "v4.3.0": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "77898f8b7c37e3ba0c555b4b7c6d0e3301127fa0de7ade6a36ed767ca1715643",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "d34818d2b5d52c2688bce0e10f7965aea1a362611c4f1ddafd95c4d90cb63319",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "59de4c27c5468f9c160d97576fbdb42a732f15569f68aacdfa96a614500f33a2",
+        },
+        # See https://github.com/kubernetes-sigs/kustomize/issues/4028
+        # for why a Windows build is unavailable for this version.
+    ],
     "v4.2.0": [
         {
             "os": "darwin",
@@ -91,28 +110,6 @@ _kustomize_releases = {
         },
         # See https://github.com/kubernetes-sigs/kustomize/issues/4028
         # for why a Windows build is unavailable for this version.
-    ],
-    "v4.1.3": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "f1e54fdb659a68e5ec0a65aa52868bcc32b18fd3bc2b545db890ba261d3781c4",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "f028cd2b675d215572d54634311777aa475eb5612fb8a70d84b957c4a27a861e",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "4c5073f4b25bd427ed6c0efa7377e2422fe58b8629c349308eaf7489fb9b71cd",
-        },
-        {
-            "os": "windows",
-            "arch": "amd64",
-            "sha256": "67a21b674a8dad5e027224c3426e496028e10a65e779e950d07e5d6d8c1d9d2d",
-        },
     ],
 }
 
@@ -147,7 +144,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.2.0"):
+def kustomize_register_tool(version = "v4.3.0"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
