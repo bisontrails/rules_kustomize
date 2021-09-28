@@ -144,7 +144,7 @@ In order to use these rules in your Bazel project, you must instruct Bazel to do
     helm_register_tool()
     kustomize_register_tool()
 
-The latter two macros—:macro:`helm_register_tool` and :macro:`kustomize_register_tool`—each register a particular version of the :tool:`helm` and :tool:`kustomize` tools, respectively. By default, these macros register `the latest version known to the rules <Tool Versions_>`_. You can specify a preferred version for each by passing the known version slug (e.g. "v4.1.2") as an argument to the function.
+The latter two macros—:macro:`helm_register_tool` and :macro:`kustomize_register_tool`—each register a particular version of the :tool:`helm` and :tool:`kustomize` tools, respectively. By default, these macros register `the latest version known to the rules <Tool Versions_>`_. You can specify a preferred version for each by passing the known version slug (e.g. "v4.3.0") as an argument to the function.
 
 With those calls in place, you're now ready to use the rules in your Bazel packages.
 
@@ -155,11 +155,14 @@ At present, these rules can load the following versions of these tools:
 
 * :tool:`kustomize`
 
-  * `v4.1.2 <https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.1.2>`__ (default)
+  * `v4.4.0 <https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.4.0>`__ (default)
+  * `v4.3.0 <https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.3.0>`__
 
 * :tool:`helm`
 
-  * `v3.5.4 <https://github.com/helm/helm/releases/tag/v3.5.4>`__ (default)
+  * `v3.7.0 <https://github.com/helm/helm/releases/tag/v3.7.0>`__ (default)
+  * `v3.6.3 <https://github.com/helm/helm/releases/tag/v3.6.3>`__
+  * `v3.6.2 <https://github.com/helm/helm/releases/tag/v3.6.2>`__
 
 Rules
 =====

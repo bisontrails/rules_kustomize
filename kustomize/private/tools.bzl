@@ -73,6 +73,25 @@ _helm_releases = {
 }
 
 _kustomize_releases = {
+    "v4.4.0": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "f0e55366239464546f9870489cee50764d87ebdd07f7402cf2622e5e8dc77ac1",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "bf3a0d7409d9ce6a4a393ba61289047b4cb875a36ece1ec94b36924a9ccbaa0f",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "f38032c5fa58dc05b406702611af82087bc02ba09d450a3c00b217bf94c6f011",
+        },
+        # See https://github.com/kubernetes-sigs/kustomize/issues/4028
+        # for why a Windows build is unavailable for this version.
+    ],
     "v4.3.0": [
         {
             "os": "darwin",
@@ -88,25 +107,6 @@ _kustomize_releases = {
             "os": "linux",
             "arch": "arm64",
             "sha256": "59de4c27c5468f9c160d97576fbdb42a732f15569f68aacdfa96a614500f33a2",
-        },
-        # See https://github.com/kubernetes-sigs/kustomize/issues/4028
-        # for why a Windows build is unavailable for this version.
-    ],
-    "v4.2.0": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "808d86fc15cec9226dd8b6440f39cfa8e8e31452efc70fb2f35c59529ddebfbf",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "220dd03dcda8e45dc50e4e42b2d71882cbc4c05e0ed863513e67930ecad939eb",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "33f2cf3b5db64c09560c187224e9d29452fde2b7f00f85941604fc75d9769e4a",
         },
         # See https://github.com/kubernetes-sigs/kustomize/issues/4028
         # for why a Windows build is unavailable for this version.
@@ -144,7 +144,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.3.0"):
+def kustomize_register_tool(version = "v4.4.0"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
