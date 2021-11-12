@@ -73,6 +73,28 @@ _helm_releases = {
 }
 
 _kustomize_releases = {
+    "v4.4.1": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "1b0eba143cd684f98341d58100c17a2dfb9658375302fe38d725752ea92012ac",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "2d5927efec40ba32a121c49f6df9955b8b8a296ef1dec4515a46fc84df158798",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "8e54066784ca38e451035dad5de985bfdbdcf55838603576ab58d880883550b5",
+        },
+        {
+            "os": "windows",
+            "arch": "amd64",
+            "sha256": "3e1b11456a81924c16c8df89653ed8597f0c446f9f56628f25f8f1abb2fe0c44",
+        },
+    ],
     "v4.4.0": [
         {
             "os": "darwin",
@@ -88,25 +110,6 @@ _kustomize_releases = {
             "os": "linux",
             "arch": "arm64",
             "sha256": "f38032c5fa58dc05b406702611af82087bc02ba09d450a3c00b217bf94c6f011",
-        },
-        # See https://github.com/kubernetes-sigs/kustomize/issues/4028
-        # for why a Windows build is unavailable for this version.
-    ],
-    "v4.3.0": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "77898f8b7c37e3ba0c555b4b7c6d0e3301127fa0de7ade6a36ed767ca1715643",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "d34818d2b5d52c2688bce0e10f7965aea1a362611c4f1ddafd95c4d90cb63319",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "59de4c27c5468f9c160d97576fbdb42a732f15569f68aacdfa96a614500f33a2",
         },
         # See https://github.com/kubernetes-sigs/kustomize/issues/4028
         # for why a Windows build is unavailable for this version.
@@ -144,7 +147,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.4.0"):
+def kustomize_register_tool(version = "v4.4.1"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
