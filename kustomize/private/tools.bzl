@@ -4,6 +4,28 @@ load(
 )
 
 _helm_releases = {
+    "v3.8.1": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "3b6d87d360a51bf0f2344edd54e3580a8e8de2c4a4fd92eccef3e811f7e81bb3",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "d643f48fe28eeb47ff68a1a7a26fc5142f348d02c8bc38d699674016716f61cd",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "dbf5118259717d86c57d379317402ed66016c642cc0d684f3505da6f194b760d",
+        },
+        {
+            "os": "windows",
+            "arch": "amd64",
+            "sha256": "a75003fc692131652d3bd218dd4007692390a1dd156f11fd7668e389bdd8f765",
+        },
+    ],
     "v3.8.0": [
         {
             "os": "darwin",
@@ -24,28 +46,6 @@ _helm_releases = {
             "os": "windows",
             "arch": "amd64",
             "sha256": "d52e0cda6c4cc0e0717d5161ca1ba7a8d446437afdbe42b3c565c145ac752888",
-        },
-    ],
-    "v3.7.2": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "5a0738afb1e194853aab00258453be8624e0a1d34fcc3c779989ac8dbcd59436",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "4ae30e48966aba5f807a4e140dad6736ee1a392940101e4d79ffb4ee86200a9e",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "b0214eabbb64791f563bd222d17150ce39bf4e2f5de49f49fdb456ce9ae8162f",
-        },
-        {
-            "os": "windows",
-            "arch": "amd64",
-            "sha256": "299165f0af46bece9a61b41305cca8e8d5ec5319a4b694589cd71e6b75aca77e",
         },
     ],
 }
@@ -108,7 +108,7 @@ def _maybe(repo_rule, name, **kwargs):
     if not native.existing_rule(name):
         repo_rule(name = name, **kwargs)
 
-def helm_register_tool(version = "v3.8.0"):
+def helm_register_tool(version = "v3.8.1"):
     for platform in _helm_releases[version]:
         suffix = "tar.gz"
         if platform["os"] == "windows":
