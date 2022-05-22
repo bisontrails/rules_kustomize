@@ -51,6 +51,28 @@ _helm_releases = {
 }
 
 _kustomize_releases = {
+    "v4.5.5": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "f604eaf1083659cd46aaffcc81bf13351a76a2d245823e2345dbb8b840622bde",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "bba81aa61dba057db1d5abeddf1e522b568b2d906ab67a5c80935e97302c8773",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "c491191b81c97ddebc4844f9254683ecfc80f40dfb15510433cbfdaeb86627c3",
+        },
+        {
+            "os": "windows",
+            "arch": "amd64",
+            "sha256": "a72d7e5bbce1388c829d17208c34bf11df69215e7e496e05d8156a0d44b7de3d",
+        },
+    ],
     "v4.5.4": [
         {
             "os": "darwin",
@@ -71,50 +93,6 @@ _kustomize_releases = {
             "os": "windows",
             "arch": "amd64",
             "sha256": "954dfa7e3fa0b3f86de5b62f0de7ac0e45cc1385eb8694afd2a5a1ac5dcb1e63",
-        },
-    ],
-    "v4.5.3": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "b0a6b0568273d466abd7cd535c556e44aa9ff5f54c07e86ed9f3016b416de992",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "e4dc2f795235b03a2e6b12c3863c44abe81338c5c0054b29baf27dcc734ae693",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "97cf7d53214388b1ff2177a56404445f02d8afacb9421339c878c5ac2c8bc2c8",
-        },
-        {
-            "os": "windows",
-            "arch": "amd64",
-            "sha256": "ad5ac5ed8d244309e4a41cfd61e87918096e159514e4867c9449409b67a6709f",
-        },
-    ],
-    "v4.5.1": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "427d1d32bdde47f3b36a848253d1c936f623ffc4dbe4137c1deadd2c099a9000",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "cc26e18e814fd162dacd5e2a1357aa133fb91589e23a15ccc8b7c163fd259c54",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "4873fb965cad3a646bea4ffc2f2f9189501fe7bc6f0ae8854920593b9ba13d73",
-        },
-        {
-            "os": "windows",
-            "arch": "amd64",
-            "sha256": "1b8062331e6af223017d015d6df2b32f8580bf9ed2f9c92bcd718aa371e6e218",
         },
     ],
 }
@@ -150,7 +128,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.5.4"):
+def kustomize_register_tool(version = "v4.5.5"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
