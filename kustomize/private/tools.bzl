@@ -51,6 +51,28 @@ _helm_releases = {
 }
 
 _kustomize_releases = {
+    "v4.5.6": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "76fbaad14142bd532d6a6a7912c6b1e48e427fb20659f172ffd4232d1d430b78",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "6802d54917eb5887f9c71031c59e6845c1a490c13881b050ea6959b714b4a432",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "3b66709c7692c5ccfdcb2f4dd383e7aa622b451b046f2197b59033f16457b3b3",
+        },
+        {
+            "os": "windows",
+            "arch": "amd64",
+            "sha256": "4974359500e8315e5e00be6cc65383872723313f96e2cf9f30971d087a2877a5",
+        },
+    ],
     "v4.5.5": [
         {
             "os": "darwin",
@@ -71,28 +93,6 @@ _kustomize_releases = {
             "os": "windows",
             "arch": "amd64",
             "sha256": "a72d7e5bbce1388c829d17208c34bf11df69215e7e496e05d8156a0d44b7de3d",
-        },
-    ],
-    "v4.5.4": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "8dfd2648948eac4b1bd996e0c87f6fe3f451db54e265cf42cbadb94b0c56f553",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "1159c5c17c964257123b10e7d8864e9fe7f9a580d4124a388e746e4003added3",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "094417546ab9b44ece44f3b31f3170080d0682519144301d5b6be080276a1f34",
-        },
-        {
-            "os": "windows",
-            "arch": "amd64",
-            "sha256": "954dfa7e3fa0b3f86de5b62f0de7ac0e45cc1385eb8694afd2a5a1ac5dcb1e63",
         },
     ],
 }
@@ -128,7 +128,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.5.5"):
+def kustomize_register_tool(version = "v4.5.6"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
