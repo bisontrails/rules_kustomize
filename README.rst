@@ -160,8 +160,8 @@ At present, these rules can load the following versions of these tools:
 
 * :tool:`helm`
 
-  * `v3.9.0 <https://github.com/helm/helm/releases/tag/v3.9.0>`__ (default)
-  * `v3.8.1 <https://github.com/helm/helm/releases/tag/v3.8.1>`__
+  * `v3.9.2 <https://github.com/helm/helm/releases/tag/v3.9.2>`__ (default)
+  * `v3.9.0 <https://github.com/helm/helm/releases/tag/v3.9.0>`__
 
 Rules
 =====
