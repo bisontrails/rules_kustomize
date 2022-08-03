@@ -51,26 +51,26 @@ _helm_releases = {
 }
 
 _kustomize_releases = {
-    "v4.5.6": [
+    "v4.5.7": [
         {
             "os": "darwin",
             "arch": "amd64",
-            "sha256": "76fbaad14142bd532d6a6a7912c6b1e48e427fb20659f172ffd4232d1d430b78",
+            "sha256": "6fd57e78ed0c06b5bdd82750c5dc6d0f992a7b926d114fe94be46d7a7e32b63a",
         },
         {
             "os": "linux",
             "arch": "amd64",
-            "sha256": "6802d54917eb5887f9c71031c59e6845c1a490c13881b050ea6959b714b4a432",
+            "sha256": "701e3c4bfa14e4c520d481fdf7131f902531bfc002cb5062dcf31263a09c70c9",
         },
         {
             "os": "linux",
             "arch": "arm64",
-            "sha256": "3b66709c7692c5ccfdcb2f4dd383e7aa622b451b046f2197b59033f16457b3b3",
+            "sha256": "65665b39297cc73c13918f05bbe8450d17556f0acd16242a339271e14861df67",
         },
         {
             "os": "windows",
             "arch": "amd64",
-            "sha256": "4974359500e8315e5e00be6cc65383872723313f96e2cf9f30971d087a2877a5",
+            "sha256": "79af25f97bb10df999e540def94e876555696c5fe42d4c93647e28f83b1efc55",
         },
     ],
     "v4.5.5": [
@@ -128,7 +128,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.5.6"):
+def kustomize_register_tool(version = "v4.5.7"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
