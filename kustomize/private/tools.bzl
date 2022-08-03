@@ -4,6 +4,28 @@ load(
 )
 
 _helm_releases = {
+    "v3.9.2": [
+        {
+            "os": "darwin",
+            "arch": "amd64",
+            "sha256": "35d7ff8bea561831d78dce8f7bf614a7ffbcad3ff88d4c2f06a51bfa51c017e2",
+        },
+        {
+            "os": "linux",
+            "arch": "amd64",
+            "sha256": "3f5be38068a1829670440ccf00b3b6656fd90d0d9cfd4367539f3b13e4c20531",
+        },
+        {
+            "os": "linux",
+            "arch": "arm64",
+            "sha256": "e4e2f9aad786042d903534e3131bc5300d245c24bbadf64fc46cca1728051dbc",
+        },
+        {
+            "os": "windows",
+            "arch": "amd64",
+            "sha256": "d0d98a2a1f4794fcfc437000f89d337dc9278b6b7672f30e164f96c9413a7a74",
+        },
+    ],
     "v3.9.0": [
         {
             "os": "darwin",
@@ -26,31 +48,31 @@ _helm_releases = {
             "sha256": "631d333bce5f2274c00af753d54bb62886cdb17a958d2aff698c196612c9e8cb",
         },
     ],
-    "v3.8.1": [
+}
+
+_kustomize_releases = {
+    "v4.5.6": [
         {
             "os": "darwin",
             "arch": "amd64",
-            "sha256": "3b6d87d360a51bf0f2344edd54e3580a8e8de2c4a4fd92eccef3e811f7e81bb3",
+            "sha256": "76fbaad14142bd532d6a6a7912c6b1e48e427fb20659f172ffd4232d1d430b78",
         },
         {
             "os": "linux",
             "arch": "amd64",
-            "sha256": "d643f48fe28eeb47ff68a1a7a26fc5142f348d02c8bc38d699674016716f61cd",
+            "sha256": "6802d54917eb5887f9c71031c59e6845c1a490c13881b050ea6959b714b4a432",
         },
         {
             "os": "linux",
             "arch": "arm64",
-            "sha256": "dbf5118259717d86c57d379317402ed66016c642cc0d684f3505da6f194b760d",
+            "sha256": "3b66709c7692c5ccfdcb2f4dd383e7aa622b451b046f2197b59033f16457b3b3",
         },
         {
             "os": "windows",
             "arch": "amd64",
-            "sha256": "a75003fc692131652d3bd218dd4007692390a1dd156f11fd7668e389bdd8f765",
+            "sha256": "4974359500e8315e5e00be6cc65383872723313f96e2cf9f30971d087a2877a5",
         },
     ],
-}
-
-_kustomize_releases = {
     "v4.5.5": [
         {
             "os": "darwin",
@@ -73,28 +95,6 @@ _kustomize_releases = {
             "sha256": "a72d7e5bbce1388c829d17208c34bf11df69215e7e496e05d8156a0d44b7de3d",
         },
     ],
-    "v4.5.4": [
-        {
-            "os": "darwin",
-            "arch": "amd64",
-            "sha256": "8dfd2648948eac4b1bd996e0c87f6fe3f451db54e265cf42cbadb94b0c56f553",
-        },
-        {
-            "os": "linux",
-            "arch": "amd64",
-            "sha256": "1159c5c17c964257123b10e7d8864e9fe7f9a580d4124a388e746e4003added3",
-        },
-        {
-            "os": "linux",
-            "arch": "arm64",
-            "sha256": "094417546ab9b44ece44f3b31f3170080d0682519144301d5b6be080276a1f34",
-        },
-        {
-            "os": "windows",
-            "arch": "amd64",
-            "sha256": "954dfa7e3fa0b3f86de5b62f0de7ac0e45cc1385eb8694afd2a5a1ac5dcb1e63",
-        },
-    ],
 }
 
 def _maybe(repo_rule, name, **kwargs):
@@ -108,7 +108,7 @@ def _maybe(repo_rule, name, **kwargs):
     if not native.existing_rule(name):
         repo_rule(name = name, **kwargs)
 
-def helm_register_tool(version = "v3.9.0"):
+def helm_register_tool(version = "v3.9.2"):
     for platform in _helm_releases[version]:
         suffix = "tar.gz"
         if platform["os"] == "windows":
@@ -128,7 +128,7 @@ filegroup(
             sha256 = platform["sha256"],
         )
 
-def kustomize_register_tool(version = "v4.5.5"):
+def kustomize_register_tool(version = "v4.5.6"):
     for platform in _kustomize_releases[version]:
         _maybe(
             http_archive,
