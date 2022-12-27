@@ -118,33 +118,24 @@ When we tell Bazel to build this new "simple" target, it will invoke :command:`k
 Integrating Into Your Project
 =============================
 
-In order to use these rules in your Bazel project, you must instruct Bazel to download the source and run the functions that make the rules available. Add the following to your project's :file:`WORKSPACE` (or :file:`WORKSPACE.bazel`) file.
+In order to use these rules in your Bazel project, you must instruct Bazel to download the source and run the functions that make the rules available. Add the following to your project's :file:`MODULE.bazel` file.
 
 .. code:: bazel
 
-    load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+    bazel_dep(name = "co_bisontrails_rules_kustomize", version = "0.2.0")
 
-    http_archive(
-        name = "co_bisontrails_rules_kustomize",
-        sha256 = "TODO(seh)",
-        urls = [
-            # TODO(seh): Establish a URL to a release.
-            "https://github.com/bisontrails/rules_bazel/releases/download/v0.1.0/rules_go-v0.1.0.tar.gz",
-        ],
-    )
+This declaration registers a particular version of the :tool:`helm` and :tool:`kustomize` tools, respectively. By default, it registers `the latest version known to the rules <Tool Versions_>`_. You can specify a preferred version for each tool by supplying the known version slug (e.g. "v4.5.7") as an argument to the respective module extension's :field:`download` tag.
 
-    load(
-        "@co_bisontrails_rules_kustomize//kustomize:deps.bzl",
-        "helm_register_tool",
-        "kustomize_register_tool",
-        "kustomize_rules_dependencies",
-     )
+.. code:: bazel
 
-    kustomize_rules_dependencies()
-    helm_register_tool()
-    kustomize_register_tool()
+    bazel_dep(name = "co_bisontrails_rules_kustomize", version = "0.2.0")
 
-The latter two macros—:macro:`helm_register_tool` and :macro:`kustomize_register_tool`—each register a particular version of the :tool:`helm` and :tool:`kustomize` tools, respectively. By default, these macros register `the latest version known to the rules <Tool Versions_>`_. You can specify a preferred version for each by passing the known version slug (e.g. "v4.3.0") as an argument to the function.
+    kustomize = use_extension("@co_bisontrails_rules_kustomize//kustomize:extensions.bzl", "kustomize")
+    kustomize.download(version = "v4.5.5")
+    helm = use_extension("@co_bisontrails_rules_kustomize//kustomize:extensions.bzl", "helm")
+    helm.download(version = "v3.9.2")
+
+If any number of modules wind up specifying different version values for these tags, the latest version—per :term:`Semantic Versioning` sorting—among the proposed candidate versions wins. If any of the tags also include the :field:`tolerate_newer` attribute with a value of :value:`False`, then no competing version newer than that tag's proposed version can win.
 
 With those calls in place, you're now ready to use the rules in your Bazel packages.
 
@@ -160,7 +151,8 @@ At present, these rules can load the following versions of these tools:
 
 * :tool:`helm`
 
-  * `v3.9.2 <https://github.com/helm/helm/releases/tag/v3.9.2>`__ (default)
+  * `v3.10.3 <https://github.com/helm/helm/releases/tag/v3.10.3>`__ (default)
+  * `v3.9.2 <https://github.com/helm/helm/releases/tag/v3.9.2>`__
   * `v3.9.0 <https://github.com/helm/helm/releases/tag/v3.9.0>`__
 
 Rules
@@ -267,11 +259,6 @@ Attributes
 +---------------------------------------+-----------------------------+---------------------------------------+
 | A unique name for the :term:`variant`.                                                                      |
 +---------------------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`enable_managed_by_label`   | :type:`bool`                | :value:`False`                        |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| Enable adding the "app.kubernetes.io/managed-by" label to objects (per the                                  |
-| :cmdflag:`--enable-managedby-label` :tool:`kustomize` flag).                                                |
-+---------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`env_bindings`              | :type:`string_dict`         | :value:`{}`                           |
 +---------------------------------------+-----------------------------+---------------------------------------+
 | Names and values of environment variables to be used by functions (per the :cmdflag:`--env`                 |
@@ -303,16 +290,6 @@ Attributes
 | See the Difficulties_ section for cases where you may need to set this value to :value:`None` within        |
 | Bazel when you could normally get by with the :tool:`kustomize` tool's default behavior of preventing       |
 | :term:`kustomizations` from loading files from outside their root_.                                         |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| :ruleattr:`reorder_resources`         | :type:`bool`                | :value:`True`                         |
-+---------------------------------------+-----------------------------+---------------------------------------+
-| Whether to reorder the :term:`kustomization`'s resources_ just before writing them as output (per the       |
-| :cmdflag:`--reorder` :tool:`kustomize` flag).                                                               |
-|                                                                                                             |
-| The default value uses the :tool:kustomize tool's "legacy" reodering. See the                               |
-| :term:`kustomize` project issues `3794 <https://github.com/kubernetes-sigs/kustomize/issues/3794>`__ and    |
-| `3829 <https://github.com/kubernetes-sigs/kustomize/issues/3829>`__ for discussion about how this sorting   |
-| behavior might change.                                                                                      |
 +---------------------------------------+-----------------------------+---------------------------------------+
 | :ruleattr:`result`                    | :type:`output`              | :value:`<name>.yaml`                  |
 +---------------------------------------+-----------------------------+---------------------------------------+
@@ -389,13 +366,13 @@ Bazel's Sandbox and Load Restrictors
 
 :tool:`kustomize` prefers to load files only from the :term:`kustomization` root directory—the one containing the :file:`kustomization.yaml` file—or any of its subdirectories. The :command:`kustomize build` subcommand runs with a :term:`load restrictor` to enforce this restrictive policy. By default, the :cmdflag:`--load-restrictor` flag uses the value :value:`LoadRestrictionsRootOnly`. With that value in effect, :command:`kustomize build` will refuse to read any files referenced by a :term:`kustomization` that lie outside of the :term:`kustomization` root directory tree, per `this FAQ entry <https://kubectl.docs.kubernetes.io/faq/kustomize/#security-file-foo-is-not-in-or-below-bar>`__.
 
-Bazel can execute the actions for its :command:`build` and :command:`build` in a restricted environment called a :term:`sandbox`, using a technique called sandboxing_. On some operating systems, Bazel uses symbolic links to make only some files available to programs it runs in its actions. These symbolic links point upward and outward to files that lie outside of the :term:`kustomization` root in the sandbox. Even though the links are within the :term:`kustomization` root, their target files are not. :tool:`kustomize` considers this to transgress its :value:`LoadRestrictionsRootOnly` load restriction and blocks the attempt to load the referenced file.
+Bazel can execute the actions for its :command:`build` and :command:`test` commands in a restricted environment called a :term:`sandbox`, using a technique called sandboxing_. On some operating systems, Bazel uses symbolic links to make only some files available to programs it runs in its actions. These symbolic links point upward and outward to files that lie outside of the :term:`kustomization` root in the sandbox. Even though the links are within the :term:`kustomization` root, their target files are not. :tool:`kustomize` considers this to transgress its :value:`LoadRestrictionsRootOnly` load restriction and blocks the attempt to load the referenced file.
 
 There are three ways around this problem:
 
 * Relax :tool:`kustomize`'s load restrictor by passing :value:`LoadRestrictionsNone` to its :cmdflag:`--load-restrictor` flag, by way of specifying the value :value:`None` for the kustomized_resources_ rule's :ruleattr:`load_restrictor` attribute.
 
-* Use a Bazel sandboxing_ implementation that doesn't rely on symbolic links, such its `sandboxfs <https://docs.bazel.build/versions/master/sandboxing.html#sandboxfs_>`__ FUSE file system. With the :tool:`sandboxfs` tool installed, pass the :cmdflag:`--experimental_use_sandboxfs` `flag <https://docs.bazel.build/versions/master/command-line-reference.html#flag--experimental_use_sandboxfs>`__ to :command:`bazel build`, :command:`bazel test`, or :command:`bazel run`.
+* Use a Bazel sandboxing_ implementation that doesn't rely on symbolic links, such as its `sandboxfs <https://docs.bazel.build/versions/master/sandboxing.html#sandboxfs_>`__ FUSE file system. With the :tool:`sandboxfs` tool installed, pass the :cmdflag:`--experimental_use_sandboxfs` `flag <https://docs.bazel.build/versions/master/command-line-reference.html#flag--experimental_use_sandboxfs>`__ to :command:`bazel build`, :command:`bazel test`, or :command:`bazel run`.
 
 .. _disable sandboxing:
 

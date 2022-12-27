@@ -1,18 +1,1 @@
 workspace(name = "co_bisontrails_rules_kustomize")
-
-load(
-    "@co_bisontrails_rules_kustomize//kustomize:deps.bzl",
-    "helm_register_tool",
-    "kustomize_register_tool",
-    "kustomize_rules_dependencies",
-)
-
-kustomize_rules_dependencies()
-
-helm_register_tool()
-
-kustomize_register_tool()
-
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-
-bazel_skylib_workspace()

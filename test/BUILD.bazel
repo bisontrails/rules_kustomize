@@ -30,7 +30,6 @@ kustomize_test(
     srcs = [
         "testdata/overlay/pod.yaml",
     ],
-    enable_managed_by_label = True,
     deps = [
         ":simple",
         "//test/testdata/components/extra-translations:extra_translations",

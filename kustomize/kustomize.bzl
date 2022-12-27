@@ -103,28 +103,11 @@ def kustomization(name, **kwargs):
     )
 
 _kustomized_resources_attrs = {
-    "_helm": attr.label(
-        doc = "Helm tool to use for inflating Helm charts.",
-        default = "//kustomize:helm",
-        allow_single_file = True,
-        executable = True,
-        cfg = "exec",
-    ),
-    "_kustomize": attr.label(
-        doc = "kustomize tool to use for building kustomizations.",
-        default = ":kustomize",
-        allow_single_file = True,
-        executable = True,
-        cfg = "exec",
-    ),
     "_zipper": attr.label(
         default = Label("@bazel_tools//tools/zip:zipper"),
         executable = True,
         allow_single_file = True,
         cfg = "exec",
-    ),
-    "enable_managed_by_label": attr.bool(
-        doc = "Enable adding the 'app.kubernetes.io/managed-by' label to objects.",
     ),
     "env_bindings": attr.string_dict(
         doc = "Names and values of environment variables to be used by functions.",
@@ -144,10 +127,6 @@ _kustomized_resources_attrs = {
             "RootOnly",
         ],
         default = "RootOnly",
-    ),
-    "reorder_resources": attr.bool(
-        doc = "Whether to reorder resources just before writing them as output.",
-        default = True,
     ),
     "result": attr.output(
         doc = "The built result, as a YAML stream of KRM resources in separate documents.",
@@ -183,22 +162,29 @@ def _files_are_derived(files):
             return True
     return False
 
+_kustomize_toolchain_type = "//tools/kustomize:toolchain_type"
+_helm_toolchain_type = "//tools/helm:toolchain_type"
+
 def _kustomized_resources_impl(ctx):
     kustomization = ctx.attr.kustomization[KustomizationInfo]
+    kustomize_tool = ctx.toolchains[_kustomize_toolchain_type].kustomizeinfo.tool
+    helm_tool = None
     args = ctx.actions.args()
     args.add("build")
     args.add(kustomization.root)
     if kustomization.requires_helm:
+        info = ctx.toolchains[_helm_toolchain_type].helminfo
+        if not info:
+            fail("No Helm toolchain is available; unable to proceed with invoking kustomize without it")
+        helm_tool = info.tool
         args.add("--enable-helm")
-        args.add("--helm-command", ctx.executable._helm.path)
+        args.add("--helm-command", helm_tool.path)
     if kustomization.requires_exec_functions:
         args.add("--enable-exec")
     if kustomization.requires_plugins:
         args.add("--enable-alpha-plugins")
     if kustomization.requires_starlark_functions:
         args.add("--enable-star")
-    if ctx.attr.enable_managed_by_label:
-        args.add("--enable-managedby-label")
 
     # Place exported environment varibles first, allowing shadowing by
     # explicit bindings
@@ -215,7 +201,6 @@ def _kustomized_resources_impl(ctx):
         )
     if ctx.attr.load_restrictor != "RootOnly":
         args.add("--load-restrictor", "LoadRestrictionsNone")
-    args.add("--reorder", "legacy" if ctx.attr.reorder_resources else "none")
     args.add("--output", ctx.outputs.result)
 
     # Allow inclusion of "--action_env" variables when they're likely to be
@@ -237,8 +222,8 @@ def _kustomized_resources_impl(ctx):
         source_zip_file = _make_zip_archive_of(ctx, files)
         ctx.actions.run_shell(
             inputs = [source_zip_file],
-            tools = [ctx.executable._kustomize] +
-                    ([ctx.executable._helm] if kustomization.requires_helm else []),
+            tools = [kustomize_tool] +
+                    ([helm_tool] if kustomization.requires_helm else []),
             outputs = [ctx.outputs.result],
             command = """\
 kustomize=$1; shift
@@ -249,7 +234,7 @@ unzip -q "${source_zip_file}"
 "${kustomize}" "${@}"
 """,
             arguments = [
-                ctx.executable._kustomize.path,
+                kustomize_tool.path,
                 source_zip_file.path,
                 args,
             ],
@@ -259,10 +244,10 @@ unzip -q "${source_zip_file}"
         )
     else:
         ctx.actions.run(
-            executable = ctx.executable._kustomize,
+            executable = kustomize_tool,
             arguments = [args],
             inputs = kustomization.transitive_resources,
-            tools = [ctx.executable._helm] if kustomization.requires_helm else [],
+            tools = [helm_tool] if kustomization.requires_helm else [],
             outputs = [ctx.outputs.result],
             use_default_shell_env = use_default_shell_env,
             mnemonic = mnemonic,
@@ -272,6 +257,13 @@ unzip -q "${source_zip_file}"
 _kustomized_resources = rule(
     attrs = _kustomized_resources_attrs,
     implementation = _kustomized_resources_impl,
+    toolchains = [
+        _kustomize_toolchain_type,
+        config_common.toolchain_type(
+            _helm_toolchain_type,
+            mandatory = False,
+        ),
+    ],
 )
 
 def kustomized_resources(name, **kwargs):

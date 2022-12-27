@@ -1,0 +1,15 @@
+load(
+    "{containing_package_prefix}:toolchain.bzl",
+    "declare_kustomize_toolchains",
+    "kustomize_tool",
+)
+
+kustomize_tool(
+    name = "tool",
+    binary = "kustomize{extension}",
+    version = "{version}",
+)
+
+declare_kustomize_toolchains(
+    kustomize_tool = ":tool",
+)

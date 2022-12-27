@@ -14,7 +14,7 @@ jobs:
     - name: Check out VCS repository
       uses: actions/checkout@v2
     - name: Confirm Bazel files is formatted per "buildifier"
-      uses: thompsonja/bazel-buildifier@v0.3.0
+      uses: thompsonja/bazel-buildifier@v0.4.0
       with:
         # See https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md.
         warnings: -function-docstring,-module-docstring
@@ -44,6 +44,7 @@ jobs:
     - name: Build all Bazel targets
       run: |
         bazel build \
+          --enable_bzlmod \
           --experimental_use_sandboxfs \
           //...
     - name: Test all Bazel targets
@@ -52,6 +53,7 @@ jobs:
       # https://github.com/bazelbuild/bazel/issues/7470#issuecomment-764591831.
       run: |
         bazel test \
+          --enable_bzlmod \
           --experimental_use_sandboxfs \
           --strategy TestRunner=processwrapper-sandbox \
           --test_output=errors \

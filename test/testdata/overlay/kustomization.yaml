@@ -8,3 +8,6 @@ resources:
 
 components:
 - ../components/extra-translations
+
+buildMetadata:
+- managedByLabel

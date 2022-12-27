@@ -26,6 +26,11 @@ def kustomize_test(
     kustomized_resources(
         name = genrule_name,
         kustomization = name,
+        # Allow running these basic tests in CI with fewer
+        # requirements imposed on the host machines, trusting that the
+        # tests don't attempt anything unsafe against which kustomize
+        # defends by default.
+        load_restrictor = "None",
         result = generated_resources_file,
         **kwargs
     )
