@@ -1,13 +1,12 @@
 module(
-    name = "co_bisontrails_rules_kustomize",
+    name = "rules_kustomize",
     version = "0.2.0",
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.3.0")
-bazel_dep(name = "platforms", version = "0.0.5")  # TODO(seh): NB: Version 0.0.6 isn't in the BCR yet.
+bazel_dep(name = "platforms", version = "0.0.6")
 
 helm = use_extension("//kustomize:extensions.bzl", "helm")
-
 use_repo(
     helm,
     "helm_tool_toolchains",
@@ -16,7 +15,6 @@ use_repo(
 register_toolchains("@helm_tool_toolchains//:all")
 
 kustomize = use_extension("//kustomize:extensions.bzl", "kustomize")
-
 use_repo(
     kustomize,
     "kustomize_tool_toolchains",

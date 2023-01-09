@@ -122,17 +122,17 @@ In order to use these rules in your Bazel project, you must instruct Bazel to do
 
 .. code:: bazel
 
-    bazel_dep(name = "co_bisontrails_rules_kustomize", version = "0.2.0")
+    bazel_dep(name = "rules_kustomize", version = "0.2.0")
 
 This declaration registers a particular version of the :tool:`helm` and :tool:`kustomize` tools, respectively. By default, it registers `the latest version known to the rules <Tool Versions_>`_. You can specify a preferred version for each tool by supplying the known version slug (e.g. "v4.5.7") as an argument to the respective module extension's :field:`download` tag.
 
 .. code:: bazel
 
-    bazel_dep(name = "co_bisontrails_rules_kustomize", version = "0.2.0")
+    bazel_dep(name = "rules_kustomize", version = "0.2.0")
 
-    kustomize = use_extension("@co_bisontrails_rules_kustomize//kustomize:extensions.bzl", "kustomize")
+    kustomize = use_extension("@rules_kustomize//kustomize:extensions.bzl", "kustomize")
     kustomize.download(version = "v4.5.5")
-    helm = use_extension("@co_bisontrails_rules_kustomize//kustomize:extensions.bzl", "helm")
+    helm = use_extension("@rules_kustomize//kustomize:extensions.bzl", "helm")
     helm.download(version = "v3.9.2")
 
 If any number of modules wind up specifying different version values for these tags, the latest version—per :term:`Semantic Versioning` sorting—among the proposed candidate versions wins. If any of the tags also include the :field:`tolerate_newer` attribute with a value of :value:`False`, then no competing version newer than that tag's proposed version can win.

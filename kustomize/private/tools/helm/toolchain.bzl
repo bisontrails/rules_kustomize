@@ -110,6 +110,9 @@ def _translate_host_platform(ctx):
 
     return os, arch
 
+_MODULE_REPOSITORY_NAME = "rules_kustomize"
+_CONTAINING_PACKAGE_PREFIX = "//kustomize/private/tools/helm"
+
 def _download_tool_impl(ctx):
     if not ctx.attr.arch and not ctx.attr.os:
         os, arch = _translate_host_platform(ctx)
@@ -141,7 +144,7 @@ def _download_tool_impl(ctx):
         Label("{}:BUILD.tool.bazel".format(_CONTAINING_PACKAGE_PREFIX)),
         executable = False,
         substitutions = {
-            "{containing_package_prefix}": _CONTAINING_PACKAGE_PREFIX,
+            "{containing_package_prefix}": "@{}{}".format(_MODULE_REPOSITORY_NAME, _CONTAINING_PACKAGE_PREFIX),
             "{extension}": ".exe" if os == "windows" else "",
             "{version}": version,
         },
@@ -160,16 +163,13 @@ _download_tool = repository_rule(
     },
 )
 
-_CONTAINING_REPOSITORY_NAME = "co_bisontrails_rules_kustomize"
-_CONTAINING_PACKAGE_PREFIX = "@{}//kustomize/private/tools/helm".format(_CONTAINING_REPOSITORY_NAME)
-
 # buildifier: disable=unnamed-macro
 def declare_bazel_toolchains(version, toolchain_prefix):
     native.constraint_value(
         name = version,
         constraint_setting = "{}:tool_version".format(_CONTAINING_PACKAGE_PREFIX),
     )
-    constraint_value_prefix = "@{}//kustomize/private/tools".format(_CONTAINING_REPOSITORY_NAME)
+    constraint_value_prefix = "@{}//kustomize/private/tools".format(_MODULE_REPOSITORY_NAME)
     for platform in _TOOLS_BY_RELEASE[version].keys():
         native.toolchain(
             name = "{}_{}_{}_toolchain".format(platform.os, platform.arch, version),
@@ -178,7 +178,7 @@ def declare_bazel_toolchains(version, toolchain_prefix):
                 "{}:os_{}".format(constraint_value_prefix, platform.os),
             ],
             toolchain = toolchain_prefix + (":{}_{}_{}".format(platform.os, platform.arch, version)),
-            toolchain_type = "@{}//tools/helm:toolchain_type".format(_CONTAINING_REPOSITORY_NAME),
+            toolchain_type = "@{}//tools/helm:toolchain_type".format(_MODULE_REPOSITORY_NAME),
         )
 
 def _toolchains_impl(ctx):
@@ -187,7 +187,7 @@ def _toolchains_impl(ctx):
         Label("{}:BUILD.toolchains.bazel".format(_CONTAINING_PACKAGE_PREFIX)),
         executable = False,
         substitutions = {
-            "{containing_package_prefix}": _CONTAINING_PACKAGE_PREFIX,
+            "{containing_package_prefix}": "@{}{}".format(_MODULE_REPOSITORY_NAME, _CONTAINING_PACKAGE_PREFIX),
             "{tool_repo}": ctx.attr.tool_repo,
             "{version}": ctx.attr.version,
         },
