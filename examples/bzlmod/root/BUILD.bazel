@@ -1,0 +1,25 @@
+load(
+    "@rules_kustomize//kustomize:kustomize.bzl",
+    "kustomization",
+    "kustomized_resources",
+)
+
+filegroup(
+    name = "resources",
+    srcs = [
+        "objects.yaml",
+    ],
+)
+
+kustomization(
+    name = "def",
+    srcs = [
+        ":resources",
+    ],
+)
+
+kustomized_resources(
+    name = "root",
+    kustomization = ":def",
+    load_restrictor = "None",
+)
