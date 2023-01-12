@@ -345,10 +345,9 @@ Fields
 | Whether this :term:`kustomization` requires use of Starlark functions (per the                   |
 | :cmdflag:`--enable-star` :tool:`kustomize` flag).                                                |
 +---------------------------------------+----------------------------------------------------------+
-| :pfield:`root`                        | :type:`string`                                           |
+| :pfield:`target_file`                 | :type:`string`                                           |
 +---------------------------------------+----------------------------------------------------------+
-| The directory immediately containing the :term:`kustomization` file defining this                |
-| :term:`kustomization`.                                                                           |
+| The top-level :term:`kustomization` file defining this :term:`kustomization`.                    |
 +---------------------------------------+----------------------------------------------------------+
 | :pfield:`transitive_resources`        | :type:`depset of File`                                   |
 +---------------------------------------+----------------------------------------------------------+

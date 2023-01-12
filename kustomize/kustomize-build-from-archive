@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -e -u -o pipefail
+
+kustomize=$1; shift
+source_zip_file=$1; shift
+
+kustomization_dir="$(mktemp -d kustomization-target-XXXXXX)"
+
+unzip -d "${kustomization_dir}" -q "${source_zip_file}"
+
+# NB: We assume that the first two arguments are the subcommand and
+# the kustomization root.
+"${kustomize}" "$1" "${kustomization_dir}/$2" "${@:3}"

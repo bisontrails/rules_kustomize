@@ -10,7 +10,7 @@ KustomizationInfo = provider(
         "requires_helm": "Whether this kustomization requires use of the Helm chart inflator generator.",
         "requires_plugins": "Whether this kustomization requires use of kustomize plugins.",
         "requires_starlark_functions": "Whether this kustomization requires use of Starlark functions.",
-        "root": "The directory immediately containing the kustomization file defining this kustomization.",
+        "target_file": "The top-level kustomization file defining this kustomization.",
         "transitive_resources": "The set of files (including other kustomizations) referenced by this kustomization.",
     },
 )
@@ -63,9 +63,6 @@ def _file_is_derived(f):
 
 def _kustomization_impl(ctx):
     k_file = ctx.file.file
-    root = k_file.dirname
-    if _file_is_derived(k_file):
-        root = paths.dirname(k_file.short_path)
     return [
         KustomizationInfo(
             requires_exec_functions =
@@ -80,7 +77,7 @@ def _kustomization_impl(ctx):
             requires_starlark_functions =
                 ctx.attr.requires_starlark_functions or
                 any([dep[KustomizationInfo].requires_starlark_functions for dep in ctx.attr.deps]),
-            root = root,
+            target_file = k_file,
             transitive_resources = depset(
                 direct = [ctx.file.file] + ctx.files.srcs,
                 transitive = [dep[KustomizationInfo].transitive_resources for dep in ctx.attr.deps],
@@ -103,6 +100,12 @@ def kustomization(name, **kwargs):
     )
 
 _kustomized_resources_attrs = {
+    "_kustomize_build": attr.label(
+        default = Label("//kustomize:kustomize_build_from_archive"),
+        executable = True,
+        allow_files = True,
+        cfg = "exec",
+    ),
     "_zipper": attr.label(
         default = Label("@bazel_tools//tools/zip:zipper"),
         executable = True,
@@ -171,7 +174,20 @@ def _kustomized_resources_impl(ctx):
     helm_tool = None
     args = ctx.actions.args()
     args.add("build")
-    args.add(kustomization.root)
+
+    target_file = kustomization.target_file
+    files = kustomization.transitive_resources.to_list()
+    files_are_derived = _files_are_derived(files)
+    if files_are_derived:
+        # NB: When this module is used from a different module, the
+        # short path to its files starts with a sibling directory with
+        # the module repository's canonical name.
+        root = paths.dirname(target_file.short_path).removeprefix("../")
+    else:
+        # We're not going to need to remap file paths in archive.
+        root = target_file.dirname
+    args.add(root)
+
     if kustomization.requires_helm:
         info = ctx.toolchains[_helm_toolchain_type].helminfo
         if not info:
@@ -207,7 +223,7 @@ def _kustomized_resources_impl(ctx):
     # significant:
     use_default_shell_env = len(ctx.attr.env_exports) > 0
     mnemonic = "KustomizeBuild"
-    progress_message = "Building the \"{}\" kustomization target {}".format(ctx.label.name, kustomization.root)
+    progress_message = "Building the \"{}\" kustomization target {}".format(ctx.label.name, kustomization.target_file)
 
     # In order to allow kustomize to find all the input files in the
     # same directory tree, as opposed to spread among different Bazel
@@ -217,27 +233,19 @@ def _kustomized_resources_impl(ctx):
     #
     # If there are no derived files involved, we don't need the
     # intermediary ZIP archive.
-    files = kustomization.transitive_resources.to_list()
-    if _files_are_derived(files):
+    if files_are_derived:
         source_zip_file = _make_zip_archive_of(ctx, files)
-        ctx.actions.run_shell(
-            inputs = [source_zip_file],
-            tools = [kustomize_tool] +
-                    ([helm_tool] if kustomization.requires_helm else []),
-            outputs = [ctx.outputs.result],
-            command = """\
-kustomize=$1; shift
-source_zip_file=$1; shift
-
-unzip -q "${source_zip_file}"
-
-"${kustomize}" "${@}"
-""",
+        ctx.actions.run(
+            executable = ctx.executable._kustomize_build,
             arguments = [
                 kustomize_tool.path,
                 source_zip_file.path,
                 args,
             ],
+            inputs = [source_zip_file],
+            tools = [kustomize_tool] +
+                    ([helm_tool] if kustomization.requires_helm else []),
+            outputs = [ctx.outputs.result],
             use_default_shell_env = use_default_shell_env,
             mnemonic = mnemonic,
             progress_message = progress_message,

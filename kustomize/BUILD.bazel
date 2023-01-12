@@ -1,0 +1,5 @@
+sh_binary(
+    name = "kustomize_build_from_archive",
+    srcs = ["kustomize-build-from-archive"],
+    visibility = ["//visibility:public"],
+)
