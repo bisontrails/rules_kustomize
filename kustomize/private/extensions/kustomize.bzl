@@ -9,6 +9,8 @@ load(
     "maximal_selected_version",
 )
 
+visibility("//kustomize")
+
 def _kustomize_impl(ctx):
     download_tool(
         name = "kustomize_tool",

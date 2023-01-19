@@ -1,6 +1,6 @@
 load(
-    "@bazel_skylib//lib:paths.bzl",
-    "paths",
+    "//kustomize/private:future.bzl",
+    _runfile_path = "runfile_path",
 )
 
 KustomizationInfo = provider(
@@ -58,11 +58,9 @@ True.""",
     ),
 }
 
-def _file_is_derived(f):
-    return len(f.root.path) > 0
-
 def _kustomization_impl(ctx):
     k_file = ctx.file.file
+
     return [
         KustomizationInfo(
             requires_exec_functions =
@@ -99,18 +97,34 @@ def kustomization(name, **kwargs):
         **kwargs
     )
 
+def _kustomization_runfiles_impl(ctx):
+    kustomization = ctx.attr.kustomization[KustomizationInfo]
+    return [
+        DefaultInfo(runfiles = ctx.runfiles(
+            files = [kustomization.target_file],
+            transitive_files = kustomization.transitive_resources,
+        )),
+    ]
+
+_kustomization_runfiles = rule(
+    implementation = _kustomization_runfiles_impl,
+    attrs = {
+        "kustomization": attr.label(
+            doc = "kustomization to build.",
+            providers = [KustomizationInfo],
+            mandatory = True,
+        ),
+    },
+)
+
 _kustomized_resources_attrs = {
-    "_kustomize_build": attr.label(
-        default = Label("//kustomize:kustomize_build_from_archive"),
+    # Unfortunately, we can't use a private attribute for an implicit
+    # dependency here, because we can't fix the default label value.
+    "kustomize_build": attr.label(
         executable = True,
         allow_files = True,
         cfg = "exec",
-    ),
-    "_zipper": attr.label(
-        default = Label("@bazel_tools//tools/zip:zipper"),
-        executable = True,
-        allow_single_file = True,
-        cfg = "exec",
+        mandatory = True,
     ),
     "env_bindings": attr.string_dict(
         doc = "Names and values of environment variables to be used by functions.",
@@ -120,8 +134,8 @@ _kustomized_resources_attrs = {
     ),
     "kustomization": attr.label(
         doc = "kustomization to build.",
-        mandatory = True,
         providers = [KustomizationInfo],
+        mandatory = True,
     ),
     "load_restrictor": attr.string(
         doc = "Control whether kustomizations may load files from outsider their root directory.",
@@ -137,34 +151,6 @@ _kustomized_resources_attrs = {
     ),
 }
 
-def _make_zip_archive_of(ctx, files):
-    zip_manifest_file = ctx.actions.declare_file("{}-manifest".format(ctx.label.name))
-    ctx.actions.write(
-        zip_manifest_file,
-        "".join(["{}={}\n".format(f.short_path, f.path) for f in files]),
-    )
-    source_zip_file = ctx.actions.declare_file(ctx.label.name + ".zip")
-
-    args = ctx.actions.args()
-    args.add("c")
-    args.add(source_zip_file.path)
-    args.add("@" + zip_manifest_file.path)
-    ctx.actions.run(
-        executable = ctx.executable._zipper,
-        arguments = [args],
-        inputs = files + [zip_manifest_file],
-        outputs = [source_zip_file],
-        mnemonic = "KustomizeCollectSourceZIPFile",
-        progress_message = "Collecting source files from kustomized_resources target \"{}\"".format(ctx.label.name),
-    )
-    return source_zip_file
-
-def _files_are_derived(files):
-    for f in files:
-        if _file_is_derived(f):
-            return True
-    return False
-
 _kustomize_toolchain_type = "//tools/kustomize:toolchain_type"
 _helm_toolchain_type = "//tools/helm:toolchain_type"
 
@@ -173,21 +159,8 @@ def _kustomized_resources_impl(ctx):
     kustomize_tool = ctx.toolchains[_kustomize_toolchain_type].kustomizeinfo.tool
     helm_tool = None
     args = ctx.actions.args()
-    args.add("build")
 
-    target_file = kustomization.target_file
-    files = kustomization.transitive_resources.to_list()
-    files_are_derived = _files_are_derived(files)
-    if files_are_derived:
-        # NB: When this module is used from a different module, the
-        # short path to its files starts with a sibling directory with
-        # the module repository's canonical name.
-        root = paths.dirname(target_file.short_path).removeprefix("../")
-    else:
-        # We're not going to need to remap file paths in archive.
-        root = target_file.dirname
-    args.add(root)
-
+    args.add(_runfile_path(ctx, kustomization.target_file))
     if kustomization.requires_helm:
         info = ctx.toolchains[_helm_toolchain_type].helminfo
         if not info:
@@ -227,40 +200,25 @@ def _kustomized_resources_impl(ctx):
 
     # In order to allow kustomize to find all the input files in the
     # same directory tree, as opposed to spread among different Bazel
-    # "roots" depending on whether the file is derived or not, pack
-    # the files into a ZIP archive with their relative paths adjusted,
-    # folding together contributions from each of these "roots."
+    # "roots" depending on whether the file is derived or not, consume
+    # the files as Bazel runfiles, folding together contributions from
+    # each of these "roots."
     #
-    # If there are no derived files involved, we don't need the
-    # intermediary ZIP archive.
-    if files_are_derived:
-        source_zip_file = _make_zip_archive_of(ctx, files)
-        ctx.actions.run(
-            executable = ctx.executable._kustomize_build,
-            arguments = [
-                kustomize_tool.path,
-                source_zip_file.path,
-                args,
-            ],
-            inputs = [source_zip_file],
-            tools = [kustomize_tool] +
-                    ([helm_tool] if kustomization.requires_helm else []),
-            outputs = [ctx.outputs.result],
-            use_default_shell_env = use_default_shell_env,
-            mnemonic = mnemonic,
-            progress_message = progress_message,
-        )
-    else:
-        ctx.actions.run(
-            executable = kustomize_tool,
-            arguments = [args],
-            inputs = kustomization.transitive_resources,
-            tools = [helm_tool] if kustomization.requires_helm else [],
-            outputs = [ctx.outputs.result],
-            use_default_shell_env = use_default_shell_env,
-            mnemonic = mnemonic,
-            progress_message = progress_message,
-        )
+    # If there are no derived files involved, we don't need to adjust
+    # the paths like that.
+    ctx.actions.run(
+        executable = ctx.executable.kustomize_build,
+        arguments = [
+            kustomize_tool.path,
+            args,
+        ],
+        tools = [kustomize_tool] +
+                ([helm_tool] if kustomization.requires_helm else []),
+        outputs = [ctx.outputs.result],
+        use_default_shell_env = use_default_shell_env,
+        mnemonic = mnemonic,
+        progress_message = progress_message,
+    )
 
 _kustomized_resources = rule(
     attrs = _kustomized_resources_attrs,
@@ -276,9 +234,24 @@ _kustomized_resources = rule(
 
 def kustomized_resources(name, **kwargs):
     result = kwargs.pop("result", name + ".yaml")
+    target_kustomization = kwargs.pop("kustomization")
 
+    runfiles_name = name + "_kustomization_runfiles"
+    kustomize_build_name = name + "_kustomize_build_from_runfiles"
+    _kustomization_runfiles(
+        name = runfiles_name,
+        kustomization = target_kustomization,
+    )
+    native.sh_binary(
+        name = kustomize_build_name,
+        srcs = [Label("//kustomize:kustomize-build-from-runfiles")],
+        data = [":" + runfiles_name],
+        deps = ["@bazel_tools//tools/bash/runfiles"],
+    )
     _kustomized_resources(
         name = name,
+        kustomize_build = ":" + kustomize_build_name,
+        kustomization = target_kustomization,
         result = result,
         **kwargs
     )

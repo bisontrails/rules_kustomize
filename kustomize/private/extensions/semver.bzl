@@ -1,3 +1,5 @@
+visibility("private")
+
 # This file is copied from the "bazel-gazelle" project's file
 # bazel-gazelle/internal/bzlmod/semver.bzl.
 # (https://github.com/bazelbuild/bazel-gazelle/blob/8adf04f8f7587ec64dc0d616b7b5243cf49b3c9d/internal/bzlmod/semver.bzl)

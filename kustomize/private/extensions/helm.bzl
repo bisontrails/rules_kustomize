@@ -9,6 +9,8 @@ load(
     "maximal_selected_version",
 )
 
+visibility("//kustomize")
+
 def _helm_impl(ctx):
     download_tool(
         name = "helm_tool",

@@ -3,6 +3,8 @@ load(
     "semver",
 )
 
+visibility("private")
+
 def make_tag_class(accepted_versions):
     return tag_class(
         attrs = {
