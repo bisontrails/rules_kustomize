@@ -242,10 +242,26 @@ def kustomized_resources(name, **kwargs):
         name = runfiles_name,
         kustomization = target_kustomization,
     )
+    native.config_setting(
+        name = name + "_lacks_runfiles_directory",
+        constraint_values = [
+            Label("@platforms//os:windows"),
+        ],
+    )
     native.sh_binary(
         name = kustomize_build_name,
-        srcs = [Label("//kustomize:kustomize-build-from-runfiles")],
-        data = [":" + runfiles_name],
+        # NB: On Windows, we don't expect to have a runfiles directory
+        # available, so instead we rely on a runfiles manifest to tell
+        # us which files should be present where. We use a ZIP archive
+        # to collect and project these runfiles into the right place.
+        srcs = select({
+            ":{}_lacks_runfiles_directory".format(name): [Label("//kustomize:kustomize-build-from-archived-runfiles")],
+            "//conditions:default": [Label("//kustomize:kustomize-build-from-runfiles")],
+        }),
+        data = [":" + runfiles_name] + select({
+            ":{}_lacks_runfiles_directory".format(name): ["@bazel_tools//tools/zip:zipper"],
+            "//conditions:default": [],
+        }),
         deps = ["@bazel_tools//tools/bash/runfiles"],
     )
     _kustomized_resources(

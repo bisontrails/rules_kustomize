@@ -1,3 +1,4 @@
 exports_files([
+    "kustomize-build-from-archived-runfiles",
     "kustomize-build-from-runfiles",
 ])
