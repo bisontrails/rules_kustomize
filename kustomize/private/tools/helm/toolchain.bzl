@@ -5,9 +5,11 @@ visibility("public")
 _TOOLS_BY_RELEASE = {
     "v3.11.0": {
         struct(os = "darwin", arch = "amd64"): "5a3d13545a302eb2623236353ccd3eaa01150c869f4d7f7a635073847fd7d932",
+        struct(os = "darwin", arch = "arm64"): "57d36ff801ce8c0201ce9917c5a2d3b4da33e5d4ea154320962c7d6fb13e1f2c",
         struct(os = "linux", arch = "amd64"): "6c3440d829a56071a4386dd3ce6254eab113bc9b1fe924a6ee99f7ff869b9e0b",
         struct(os = "linux", arch = "arm64"): "57d36ff801ce8c0201ce9917c5a2d3b4da33e5d4ea154320962c7d6fb13e1f2c",
         struct(os = "windows", arch = "amd64"): "55477fa4295fb3043835397a19e99a138bb4859fbe7cd2d099de28df9d8786f1",
+        # NB: There is no Windows build available for the ARM64 architecture.
     },
     "v3.10.3": {
         struct(os = "darwin", arch = "amd64"): "77a94ebd37eab4d14aceaf30a372348917830358430fcd7e09761eed69f08be5",
