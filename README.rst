@@ -146,7 +146,8 @@ At present, these rules can load the following versions of these tools:
 
 * :tool:`kustomize`
 
-  * `v4.5.7 <https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.5.7>`__ (default)
+  * `v5.0.0 <https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv5.0.0>`__ (default)
+  * `v4.5.7 <https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.5.7>`__
   * `v4.5.5 <https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.5.5>`__
 
 * :tool:`helm`
