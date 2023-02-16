@@ -234,13 +234,15 @@ _kustomized_resources = rule(
 
 def kustomized_resources(name, **kwargs):
     result = kwargs.pop("result", name + ".yaml")
-    target_kustomization = kwargs.pop("kustomization")
+    target_kustomization = kwargs["kustomization"]
+    tags = kwargs.get("tags", [])
 
     runfiles_name = name + "_kustomization_runfiles"
     kustomize_build_name = name + "_kustomize_build_from_runfiles"
     _kustomization_runfiles(
         name = runfiles_name,
         kustomization = target_kustomization,
+        tags = tags,
     )
     native.config_setting(
         name = name + "_lacks_runfiles_directory",
@@ -263,11 +265,11 @@ def kustomized_resources(name, **kwargs):
             "//conditions:default": [],
         }),
         deps = ["@bazel_tools//tools/bash/runfiles"],
+        tags = tags,
     )
     _kustomized_resources(
         name = name,
         kustomize_build = ":" + kustomize_build_name,
-        kustomization = target_kustomization,
         result = result,
         **kwargs
     )
