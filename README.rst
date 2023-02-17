@@ -122,7 +122,7 @@ In order to use these rules in your Bazel project, you must instruct Bazel to do
 
 .. code:: bazel
 
-    bazel_dep(name = "rules_kustomize", version = "0.2.0")
+    bazel_dep(name = "rules_kustomize", version = "0.2.2")
 
 This declaration registers a particular version of the :tool:`helm` and :tool:`kustomize` tools, respectively. By default, it registers `the latest version known to the rules <Tool Versions_>`_. You can specify a preferred version for each tool by supplying the known version slug (e.g. "v4.5.7") as an argument to the respective module extension's :field:`download` tag.
 
