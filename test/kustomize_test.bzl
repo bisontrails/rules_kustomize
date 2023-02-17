@@ -3,6 +3,10 @@ load(
     "kustomization",
     "kustomized_resources",
 )
+load(
+    "@bazel_skylib//rules:diff_test.bzl",
+    "diff_test",
+)
 
 def kustomize_test(
         name,
@@ -34,20 +38,9 @@ def kustomize_test(
         result = generated_resources_file,
         **kwargs
     )
-
-    if not golden_file:
-        golden_file = "testdata/%s/golden.yaml" % name
-
-    native.sh_test(
+    diff_test(
         name = name + "_test",
-        srcs = ["diff-test-runner"],
-        args = [
-            "$(location %s)" % golden_file,
-            "$(location %s)" % generated_resources_file,
-        ],
-        data = [
-            generated_resources_file,
-            golden_file,
-        ],
+        file1 = generated_resources_file,
+        file2 = golden_file or "testdata/%s/golden.yaml" % name,
         size = "small",
     )
