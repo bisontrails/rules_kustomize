@@ -10,6 +10,8 @@ jobs:
     steps:
     - name: Check out VCS repository
       uses: actions/checkout@v3
+    - name: Build and test all Bazel targets
+      uses: ./.github/actions/build-test
     - name: Prepare release notes and artifacts
       run: |
         gh_repository="${{ github.repository }}"
