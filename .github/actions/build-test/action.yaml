@@ -1,0 +1,44 @@
+name: Build and Test
+description: |
+  Build all eligible Bazel targets and run all available
+  tests, confirming that they all pass.
+runs:
+  using: composite
+  steps:
+  - name: Cache Bazel-related artifacts
+    uses: actions/cache@v3
+    env:
+      cache-name: bazel-cache
+    with:
+      path: |
+        ~/.cache/bazelisk
+        ~/.cache/bazel
+      key: ${{ runner.os }}-${{ env.cache-name }}
+  - name: Install FUSE
+    run: sudo apt install libfuse2
+    shell: bash
+  - name: Install sandboxfs
+    run: |
+      f='./sandboxfs.tar.gz'
+      curl --location --output "${f}" --silent \
+        https://github.com/bazelbuild/sandboxfs/releases/download/sandboxfs-0.2.0/sandboxfs-0.2.0-20200420-linux-x86_64.tgz
+      sudo tar xzv -C /usr/local -f "${f}"
+      rm "${f}"
+    shell: bash
+  - name: Build all Bazel targets
+    run: |
+      bazel build \
+        --experimental_use_sandboxfs \
+        //...
+    shell: bash
+  - name: Test all Bazel targets
+    # Work around https://github.com/bazelbuild/bazel/issues/7470 by
+    # way of the suggestion here:
+    # https://github.com/bazelbuild/bazel/issues/7470#issuecomment-764591831.
+    run: |
+      bazel test \
+        --experimental_use_sandboxfs \
+        --strategy TestRunner=processwrapper-sandbox \
+        --test_output=errors \
+        //...
+    shell: bash

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out VCS repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Confirm Bazel files is formatted per "buildifier"
       uses: thompsonja/bazel-buildifier@v0.4.0
       with:
@@ -20,38 +20,7 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-    - name: Cache bazel-related artifacts
-      uses: actions/cache@v3
-      env:
-        cache-name: bazel-cache
-      with:
-        path: |
-          ~/.cache/bazelisk
-          ~/.cache/bazel
-        key: ${{ runner.os }}-${{ env.cache-name }}
     - name: Check out VCS repository
       uses: actions/checkout@v3
-    - name: Install FUSE
-      run: sudo apt install libfuse2
-    - name: Install sandboxfs
-      run: |
-        f='./sandboxfs.tar.gz'
-        curl --location --output "${f}" --silent \
-          https://github.com/bazelbuild/sandboxfs/releases/download/sandboxfs-0.2.0/sandboxfs-0.2.0-20200420-linux-x86_64.tgz
-        sudo tar xzv -C /usr/local -f "${f}"
-        rm "${f}"
-    - name: Build all Bazel targets
-      run: |
-        bazel build \
-          --experimental_use_sandboxfs \
-          //...
-    - name: Test all Bazel targets
-      # Work around https://github.com/bazelbuild/bazel/issues/7470 by
-      # way of the suggestion here:
-      # https://github.com/bazelbuild/bazel/issues/7470#issuecomment-764591831.
-      run: |
-        bazel test \
-          --experimental_use_sandboxfs \
-          --strategy TestRunner=processwrapper-sandbox \
-          --test_output=errors \
-          //...
+    - name: Build and test all Bazel targets
+      uses: ./.github/actions/build-test
