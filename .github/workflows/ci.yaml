@@ -1,9 +1,5 @@
 name: Continuous Integration
 on:
-  # See https://docs.github.com/en/actions/reference/events-that-trigger-workflows.
-  push:
-    tags:
-    - v*
   pull_request:
 jobs:
   bazel-source-inspection:
